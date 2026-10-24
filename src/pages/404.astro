@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Sayfa bulunamadı" description="Aradığınız sayfa bulunamadı." noindex>
+  <div class="container nf">
+    <h1>Sayfa bulunamadı</h1>
+    <p class="lead">Aradığınız sayfa taşınmış veya kaldırılmış olabilir. Ürün satılmışsa mağazadan benzerlerine bakabilirsiniz.</p>
+    <form action="/magaza/" method="get" role="search">
+      <label class="label" for="nf-q">Ürün ara</label>
+      <div class="row">
+        <input class="input" id="nf-q" name="q" type="search" placeholder="Ürün adı, ülke, dönem veya yıl ara" />
+        <button class="btn btn--primary" type="submit">Ara</button>
+      </div>
+    </form>
+    <p><a href="/">Ana sayfaya dön</a></p>
+  </div>
+</BaseLayout>
+
+<style>
+  .nf {
+    max-width: 640px;
+    padding-block: var(--space-8);
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  form {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .row {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .row .input {
+    flex: 1;
+    min-width: 0;
+  }
+</style>

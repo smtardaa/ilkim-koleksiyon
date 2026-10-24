@@ -1,0 +1,288 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<BaseLayout title="Sepet" description="Sepetinizdeki ürünler." current="cart" noindex>
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Sepet' }]} />
+    <h1>Sepet</h1>
+
+    <div class="cart" data-cart>
+      <p class="cart__loading" data-cart-loading>Sepet yükleniyor…</p>
+
+      <div class="cart__empty" data-cart-empty hidden>
+        <p>Sepetinizde ürün yok.</p>
+        <a class="btn btn--primary" href="/magaza/">Mağazaya git</a>
+      </div>
+
+      <div class="cart__layout" data-cart-filled hidden>
+        <section aria-labelledby="sepet-urunler">
+          <h2 id="sepet-urunler" class="visually-hidden">Ürünler</h2>
+          <ul class="lines" data-cart-lines></ul>
+        </section>
+
+        <aside class="summary" aria-labelledby="sepet-ozet">
+          <h2 id="sepet-ozet">Sipariş özeti</h2>
+          <dl>
+            <div>
+              <dt>Ara toplam</dt>
+              <dd data-subtotal></dd>
+            </div>
+            <div>
+              <dt>Kargo</dt>
+              <dd class="placeholder-value">Ödeme adımında belirlenecek</dd>
+            </div>
+            <div class="summary__total">
+              <dt>Toplam <span class="hint">(kargo hariç)</span></dt>
+              <dd data-total></dd>
+            </div>
+          </dl>
+          <button class="btn btn--primary btn--block" type="button" disabled aria-describedby="odeme-demo">
+            Ödemeye geç
+          </button>
+          <p class="notice notice--demo" id="odeme-demo">
+            <Icon name="info" size={18} />
+            <span>
+              <strong>Demo:</strong> ödeme bağlı değil. Bu sepet yalnızca bu tarayıcıda saklanır; sipariş oluşturulmaz
+              ve ödeme alınmaz.
+            </span>
+          </p>
+          <p class="hint">Gerçek kullanımda nihai tutar, stok ve kargo ücreti ödeme adımında doğrulanır.</p>
+        </aside>
+      </div>
+      <p class="visually-hidden" aria-live="polite" data-cart-live></p>
+    </div>
+  </div>
+
+  <template id="cart-line-template">
+  <li class="line">
+    <a class="line__media" data-link tabindex="-1" aria-hidden="true"><img data-img alt="" width="160" height="120" /></a>
+    <div class="line__info">
+      <a class="line__title" data-link data-title></a>
+      <p class="line__unit" data-unit></p>
+    </div>
+    <div class="line__qty">
+      <span class="label" data-qty-label>Adet</span>
+      <div class="stepper">
+        <button class="icon-btn" type="button" data-dec><Icon name="minus" size={18} /></button>
+        <input class="input" type="number" inputmode="numeric" min="1" data-qty />
+        <button class="icon-btn" type="button" data-inc><Icon name="plus" size={18} /></button>
+      </div>
+      <p class="hint" data-max></p>
+    </div>
+    <p class="line__total" data-line-total></p>
+    <button class="btn btn--ghost line__remove" type="button" data-remove>
+      <Icon name="trash" size={18} /> Kaldır
+    </button>
+  </li>
+</template>
+</BaseLayout>
+
+
+
+<script>
+  import { initCartPage } from '../scripts/cart-page.js';
+  initCartPage(document.querySelector('[data-cart]'), document.getElementById('cart-line-template'));
+</script>
+
+<style>
+  h1 {
+    margin-bottom: var(--space-5);
+  }
+
+  .cart__empty {
+    padding: var(--space-7) var(--space-4);
+    text-align: center;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .cart__layout {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 960px) {
+    .cart__layout {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      align-items: start;
+    }
+  }
+
+  .lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .lines :global(.line) {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-areas:
+      'media info'
+      'media qty'
+      'total remove';
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+
+  @media (min-width: 700px) {
+    .lines :global(.line) {
+      grid-template-columns: 120px minmax(0, 1fr) auto 120px auto;
+      grid-template-areas: 'media info qty total remove';
+    }
+  }
+
+  .lines :global(.line__media) {
+    grid-area: media;
+    align-self: start;
+    position: relative;
+    background: var(--photo-bg);
+    border-radius: var(--radius);
+    aspect-ratio: 4 / 3;
+  }
+
+  .lines :global(.line__media img) {
+    position: absolute;
+    top: 8%;
+    left: 8%;
+    width: 84%;
+    height: 84%;
+    object-fit: contain;
+  }
+
+  .lines :global(.line__info) {
+    grid-area: info;
+  }
+
+  .lines :global(.line__title) {
+    font-weight: 600;
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  .lines :global(.line__title:hover) {
+    text-decoration: underline;
+  }
+
+  .lines :global(.line__unit) {
+    margin: var(--space-1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  .lines :global(.line__qty) {
+    grid-area: qty;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .lines :global(.line__qty .hint) {
+    margin: 0;
+  }
+
+  .lines :global(.stepper) {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    width: max-content;
+  }
+
+  .lines :global(.stepper .input) {
+    width: 3.5rem;
+    border: 0;
+    text-align: center;
+    padding-inline: 0;
+    -moz-appearance: textfield;
+  }
+
+  .lines :global(.stepper .input::-webkit-inner-spin-button),
+  .lines :global(.stepper .input::-webkit-outer-spin-button) {
+    -webkit-appearance: none;
+  }
+
+  .lines :global(.stepper .icon-btn[disabled]) {
+    color: var(--c-gray-line);
+    cursor: not-allowed;
+  }
+
+  .lines :global(.line__total) {
+    grid-area: total;
+    margin: 0;
+    font-weight: 700;
+    color: var(--heading);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (min-width: 700px) {
+    .lines :global(.line__total) {
+      text-align: right;
+    }
+  }
+
+  .lines :global(.line__remove) {
+    grid-area: remove;
+    justify-self: end;
+    font-size: var(--fs-sm);
+  }
+
+  .summary {
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 960px) {
+    .summary {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-4));
+    }
+  }
+
+  .summary h2 {
+    font-size: var(--fs-lg);
+    margin: 0;
+  }
+
+  .summary dl {
+    margin: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .summary dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    font-size: var(--fs-sm);
+  }
+
+  .summary dd {
+    margin: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary .summary__total {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--heading);
+  }
+
+  .summary .hint {
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,415 @@
+---
+/**
+ * Mağaza listeleme: arama, filtreler, sıralama ve ürün ızgarası.
+ * Tüm ürün kartları build sırasında HTML'e yazılır; tarayıcıdaki betik
+ * yalnızca kartları gizler/sıralar ve durumu URL'de tutar (geri dönüldüğünde
+ * aynı liste görünür).
+ */
+import ProductCard from './ProductCard.astro';
+import Icon from './Icon.astro';
+import { getFacets, sortNewest } from '../lib/catalog.js';
+
+const { products, showCategoryFilter = true, idPrefix = 'f' } = Astro.props;
+const facets = getFacets(products);
+const sorted = sortNewest(products);
+const id = (s) => `${idPrefix}-${s}`;
+---
+
+<div class="listing" data-listing>
+  <div class="listing__toolbar">
+    <div class="field listing__search">
+      <label for={id('q')}>Ürün ara</label>
+      <input
+        class="input"
+        id={id('q')}
+        type="search"
+        name="q"
+        placeholder="Ürün adı, ülke, dönem veya yıl"
+        autocomplete="off"
+        enterkeyhint="search"
+        data-q
+      />
+    </div>
+    <div class="field listing__sort">
+      <label for={id('sort')}>Sırala</label>
+      <select class="select" id={id('sort')} data-sort>
+        <option value="yeni">Yeni eklenenler</option>
+        <option value="artan">Fiyat: düşükten yükseğe</option>
+        <option value="azalan">Fiyat: yüksekten düşüğe</option>
+      </select>
+    </div>
+    <button
+      class="btn btn--secondary listing__filters-btn"
+      type="button"
+      aria-controls={id('panel')}
+      aria-expanded="false"
+      data-filters-open
+    >
+      <Icon name="filter" size={18} /> Filtreler <span class="badge" data-filter-count hidden></span>
+    </button>
+  </div>
+
+  <div class="listing__status">
+    <p class="listing__count" aria-live="polite" data-count>{products.length} ürün</p>
+    <ul class="chips" data-chips aria-label="Etkin filtreler"></ul>
+    <button class="btn btn--ghost listing__clear" type="button" data-clear hidden>Filtreleri temizle</button>
+  </div>
+
+  <div class="listing__layout">
+    <div class="filters" id={id('panel')} data-filters aria-labelledby={id('title')}>
+      <div class="filters__head">
+        <h2 id={id('title')}>Filtreler</h2>
+        <button class="icon-btn filters__close" type="button" data-filters-close>
+          <span class="visually-hidden">Filtreleri kapat</span>
+          <Icon name="close" />
+        </button>
+      </div>
+
+      <form class="filters__body" data-filter-form onsubmit="return false">
+        {
+          showCategoryFilter && facets.categories.length > 1 && (
+            <fieldset>
+              <legend>Kategori</legend>
+              {facets.categories.map((c) => (
+                <label class="check">
+                  <input type="checkbox" name="kategori" value={c.slug} data-label={c.name} />
+                  {c.name}
+                </label>
+              ))}
+            </fieldset>
+          )
+        }
+
+        {
+          facets.countries.length > 1 && (
+            <fieldset>
+              <legend>Ülke</legend>
+              {facets.countries.map((v) => (
+                <label class="check">
+                  <input type="checkbox" name="ulke" value={v} data-label={v} />
+                  {v}
+                </label>
+              ))}
+            </fieldset>
+          )
+        }
+
+        {
+          facets.periods.length > 1 && (
+            <fieldset>
+              <legend>Dönem</legend>
+              {facets.periods.map((v) => (
+                <label class="check">
+                  <input type="checkbox" name="donem" value={v} data-label={v} />
+                  {v}
+                </label>
+              ))}
+            </fieldset>
+          )
+        }
+
+        {
+          facets.minYear && (
+            <fieldset>
+              <legend>Yıl</legend>
+              <div class="year-range">
+                <div class="field">
+                  <label for={id('ymin')}>En erken</label>
+                  <input
+                    class="input"
+                    id={id('ymin')}
+                    name="yil-min"
+                    type="number"
+                    inputmode="numeric"
+                    min={facets.minYear}
+                    max={facets.maxYear}
+                    placeholder={String(facets.minYear)}
+                  />
+                </div>
+                <div class="field">
+                  <label for={id('ymax')}>En geç</label>
+                  <input
+                    class="input"
+                    id={id('ymax')}
+                    name="yil-max"
+                    type="number"
+                    inputmode="numeric"
+                    min={facets.minYear}
+                    max={facets.maxYear}
+                    placeholder={String(facets.maxYear)}
+                  />
+                </div>
+              </div>
+              <p class="hint">Yılı bilinmeyen ürünler yıl filtresinde gösterilmez.</p>
+            </fieldset>
+          )
+        }
+
+        <fieldset>
+          <legend>Durum</legend>
+          <label class="check">
+            <input type="checkbox" name="stokta" value="1" data-label="Yalnızca satıştakiler" />
+            Yalnızca satıştakiler
+          </label>
+        </fieldset>
+      </form>
+
+      <div class="filters__foot">
+        <button class="btn btn--secondary" type="button" data-clear-panel>Temizle</button>
+        <button class="btn btn--primary" type="button" data-filters-apply>
+          <span data-apply-label>{products.length} sonucu göster</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="listing__results">
+      <ul class="product-grid" data-grid>
+        {sorted.map((p, i) => <ProductCard product={p} withData loading={i < 6 ? 'eager' : 'lazy'} />)}
+      </ul>
+
+      <div class="empty" data-empty hidden>
+        <h2>Bu ölçütlere uyan ürün bulunamadı</h2>
+        <p>Arama ifadesini kısaltmayı, yıl aralığını genişletmeyi veya bazı filtreleri kaldırmayı deneyin.</p>
+        <button class="btn btn--primary" type="button" data-clear-empty>Filtreleri temizle</button>
+      </div>
+    </div>
+  </div>
+  <div class="filters-backdrop" data-filters-backdrop hidden></div>
+</div>
+
+<script>
+  import { initListing } from '../scripts/listing.js';
+  document.querySelectorAll('[data-listing]').forEach(initListing);
+</script>
+
+<style>
+  .listing__toolbar {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+
+  .listing__search {
+    grid-column: 1 / -1;
+  }
+
+  .listing__sort {
+    min-width: 0;
+  }
+
+  @media (min-width: 900px) {
+    .listing__toolbar {
+      grid-template-columns: minmax(0, 1fr) 260px;
+    }
+
+    .listing__search {
+      grid-column: auto;
+    }
+
+    .listing__filters-btn {
+      display: none;
+    }
+  }
+
+  .listing__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    margin: var(--space-4) 0 var(--space-5);
+    min-height: var(--tap);
+  }
+
+  .listing__count {
+    margin: 0;
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  .chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .chips :global(button) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 36px;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--c-caramel);
+    background: var(--c-rust);
+    color: var(--heading);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+  }
+
+  .chips :global(button:hover) {
+    background: var(--c-caramel);
+    color: var(--on-accent);
+  }
+
+  .listing__clear {
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+  }
+
+  .listing__layout {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 900px) {
+    .listing__layout {
+      grid-template-columns: 250px minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  /* Filtre paneli */
+  .filters h2 {
+    font-size: var(--fs-md);
+    margin: 0;
+  }
+
+  .filters__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-2);
+  }
+
+  fieldset {
+    border: 0;
+    margin: 0;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  fieldset:last-child {
+    border-bottom: 0;
+  }
+
+  legend {
+    padding: 0;
+    margin-bottom: var(--space-2);
+    font-weight: 650;
+    color: var(--heading);
+    font-size: var(--fs-sm);
+  }
+
+  .year-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .year-range label {
+    font-weight: 500;
+    font-size: var(--fs-xs);
+  }
+
+  .filters .hint {
+    margin: var(--space-2) 0 0;
+  }
+
+  .filters__foot {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .filters {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-4));
+      max-height: calc(100vh - var(--header-h) - var(--space-6));
+      overflow-y: auto;
+    }
+
+    .filters__close {
+      display: none;
+    }
+  }
+
+  @media (max-width: 899px) {
+    .filters {
+      position: fixed;
+      z-index: 70;
+      inset: 0 0 0 auto;
+      width: min(400px, 100vw);
+      background: var(--bg-deep);
+      display: flex;
+      flex-direction: column;
+      visibility: hidden;
+      transform: translateX(100%);
+      transition:
+        transform 220ms var(--ease),
+        visibility 0s linear 220ms;
+      box-shadow: var(--shadow);
+    }
+
+    .filters.is-open {
+      visibility: visible;
+      transform: none;
+      transition: transform 220ms var(--ease);
+    }
+
+    .filters__head {
+      padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .filters__body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 var(--space-5) var(--space-5);
+    }
+
+    .filters__foot {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5) calc(var(--space-3) + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: var(--bg-deep);
+    }
+
+    .filters-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 69;
+      background: rgb(0 0 0 / 0.6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .filters,
+    .filters.is-open {
+      transition: none;
+    }
+  }
+
+  .empty {
+    text-align: center;
+    padding: var(--space-7) var(--space-4);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .empty h2 {
+    font-size: var(--fs-lg);
+  }
+
+  .empty p {
+    color: var(--muted);
+    max-width: 48ch;
+    margin-inline: auto;
+  }
+</style>

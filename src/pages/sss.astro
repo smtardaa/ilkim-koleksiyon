@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { faqGeneral, faqPolicies, faqSources } from '../config/faq.js';
+import { conditionScale } from '../config/conditions.js';
+import { store } from '../config/store.js';
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqGeneral.map((f) => ({
+    '@type': 'Question',
+    name: f.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: [...f.paragraphs, ...(f.list ?? []), f.after].filter(Boolean).join(' '),
+    },
+  })),
+};
+---
+
+<BaseLayout
+  title="Sık Sorulan Sorular"
+  description="Koleksiyona başlamak, kondisyon, saklama, temizlik, sertifika ve katalog numaraları hakkında kısa cevaplar."
+  current="faq"
+  jsonLd={[faqJsonLd]}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Sık Sorulan Sorular' }]} />
+    <header class="page-head">
+      <h1>Sık Sorulan Sorular</h1>
+      <p class="lead">Koleksiyona yeni başlayanlar için temel sorular ve kısa cevaplar.</p>
+    </header>
+
+    <div class="faq-layout">
+      <nav class="toc" aria-labelledby="toc-title">
+        <h2 id="toc-title">Bu sayfada</h2>
+        <ol>
+          {
+            faqGeneral.map((f) => (
+              <li>
+                <a href={`#${f.id}`}>{f.question}</a>
+              </li>
+            ))
+          }
+          <li><a href="#siparis">Sipariş, kargo ve iade</a></li>
+        </ol>
+      </nav>
+
+      <div class="faq">
+        {
+          faqGeneral.map((f) => (
+            <section id={f.id} class="qa" aria-labelledby={`${f.id}-q`}>
+              <h2 id={`${f.id}-q`}>{f.question}</h2>
+              {f.paragraphs.map((p) => (
+                <p>{p}</p>
+              ))}
+              {f.list && (
+                <ul>
+                  {f.list.map((li) => (
+                    <li>{li}</li>
+                  ))}
+                </ul>
+              )}
+              {f.after && <p>{f.after}</p>}
+              {f.showScale && (
+                <div class="table-wrap" role="region" aria-label="Kondisyon ölçeği" tabindex="0">
+                  <table>
+                    <caption>Bu mağazada kullanılan kondisyon ölçeği</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Derece</th>
+                        <th scope="col">Kısaltma</th>
+                        <th scope="col">Yaklaşık karşılık</th>
+                        <th scope="col">Açıklama</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {conditionScale.map((c) => (
+                        <tr>
+                          <th scope="row">{c.label}</th>
+                          <td>{c.short}</td>
+                          <td>{c.intl}</td>
+                          <td>{c.summary}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          ))
+        }
+
+        <section id="siparis" class="qa" aria-labelledby="siparis-q">
+          <h2 id="siparis-q">Sipariş, kargo ve iade</h2>
+          {
+            faqPolicies.map((f) => (
+              <div class="policy" id={f.id}>
+                <h3>{f.question}</h3>
+                {store.policies[f.policy] ? (
+                  <p>{store.policies[f.policy]}</p>
+                ) : (
+                  <p class="placeholder-value">Bu bilgi işletme tarafından eklenecek.</p>
+                )}
+              </div>
+            ))
+          }
+        </section>
+
+        <section class="sources" aria-labelledby="kaynaklar">
+          <h2 id="kaynaklar">Kaynaklar</h2>
+          <p>Genel bilgiler aşağıdaki kaynaklardan derlenerek sadeleştirilmiştir.</p>
+          <ul>
+            {
+              faqSources.map((s) => (
+                <li>
+                  <a href={s.url} rel="noopener" target="_blank">
+                    {s.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-head {
+    padding-block: var(--space-2) var(--space-6);
+  }
+
+  .faq-layout {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 960px) {
+    .faq-layout {
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: var(--space-8);
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-4));
+    }
+  }
+
+  .toc {
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .toc h2 {
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .toc ol {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--fs-sm);
+  }
+
+  .toc a {
+    display: inline-block;
+    padding-block: 0.3rem;
+  }
+
+  .faq {
+    display: grid;
+    gap: var(--space-6);
+    max-width: 72ch;
+  }
+
+  .qa {
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .qa h2 {
+    font-size: var(--fs-lg);
+  }
+
+  .qa ul {
+    padding-left: 1.25rem;
+    margin: 0 0 var(--space-4);
+  }
+
+  .qa li + li {
+    margin-top: var(--space-2);
+  }
+
+  .policy + .policy {
+    margin-top: var(--space-4);
+  }
+
+  .policy h3 {
+    margin-bottom: var(--space-1);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+
+  caption {
+    text-align: left;
+    padding: var(--space-3);
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border-top: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  thead th {
+    background: var(--surface);
+  }
+
+  .sources {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  .sources h2 {
+    font-size: var(--fs-md);
+  }
+
+  .sources ul {
+    padding-left: 1.25rem;
+    margin: 0;
+  }
+
+  .sources li + li {
+    margin-top: var(--space-1);
+  }
+</style>

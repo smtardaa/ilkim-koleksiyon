@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { getAllProducts, productUrl, isSampleData } from '../lib/catalog.js';
+import { getCategory } from '../config/categories.js';
+import { formatDate } from '../lib/format.js';
+
+/**
+ * Demo ürünlerinin bilgi ve görsel kaynakları. CC BY / CC BY-SA görseller
+ * için atıf zorunluluğu bu sayfa ve ürün sayfalarındaki kaynak bölümüyle
+ * karşılanır.
+ */
+const products = await getAllProducts();
+---
+
+<BaseLayout
+  title="Ürün ve Görsel Kaynakları"
+  description="Demo ürünlerinin dayandığı koleksiyon kayıtları, görsel sahipleri ve lisansları."
+>
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Ürün ve görsel kaynakları' }]} />
+    <header class="page-head">
+      <h1>Ürün ve görsel kaynakları</h1>
+      {
+        isSampleData && (
+          <p class="lead">
+            Bu demodaki ürünler müze, merkez bankası ve Wikimedia Commons kayıtlarındaki gerçek parçalara dayanır. Bu
+            parçalar İlkim Koleksiyon’un stoğunda değildir; fiyat ve stok bilgileri örnektir.
+          </p>
+        )
+      }
+    </header>
+
+    <div class="notice notice--demo rules">
+      <p>
+        <strong>T.C. banknot görselleri:</strong> TCMB’nin duyurusuna göre tedavüldeki ve tedavülden kalkmış banknotların
+        elektronik görüntüleri 72 dpi’yi aşmamalı ve üzerinde çapraz “ÖRNEKTİR GEÇMEZ” ibaresi bulunmalıdır. Kullanılan
+        TCMB görselleri bu koşullara uygundur.{' '}
+        <a
+          href="https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Banknotlar/Banknotlarla+ilgili+Genel+Bilgiler/Banknotlarin+Cogaltilmasi"
+          target="_blank"
+          rel="noopener">TCMB – Banknotların Çoğaltılması</a
+        >
+      </p>
+    </div>
+
+    <div class="table-wrap" role="region" aria-labelledby="kaynak-tablosu" tabindex="0">
+      <table>
+        <caption id="kaynak-tablosu">Ürün başına bilgi ve görsel kaynağı</caption>
+        <thead>
+          <tr>
+            <th scope="col">Ürün</th>
+            <th scope="col">Kategori</th>
+            <th scope="col">Bilgi kaynağı</th>
+            <th scope="col">Görsel ve lisans</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            products.map((p) => {
+              const credits = [...new Map(p.images.map((i) => [i.credit?.sourceUrl + i.credit?.author, i.credit])).values()].filter(Boolean);
+              return (
+                <tr>
+                  <th scope="row">
+                    <a href={productUrl(p)}>{p.title}</a>
+                  </th>
+                  <td>{getCategory(p.category)?.name}</td>
+                  <td>
+                    {p.source ? (
+                      <>
+                        <a href={p.source.url} target="_blank" rel="noopener">
+                          {p.source.label}
+                        </a>
+                        <span class="muted"> · {formatDate(p.source.checkedAt)}</span>
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    {credits.map((c) => (
+                      <div>
+                        {c.author} ·{' '}
+                        {c.license.url ? (
+                          <a href={c.license.url} target="_blank" rel="noopener license">
+                            {c.license.name}
+                          </a>
+                        ) : (
+                          c.license.name
+                        )}{' '}
+                        ·{' '}
+                        <a href={c.sourceUrl} target="_blank" rel="noopener">
+                          {c.sourceLabel}
+                        </a>
+                      </div>
+                    ))}
+                  </td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted foot">
+      Görseller yalnızca yeniden boyutlandırıldı veya JPEG’e dönüştürüldü; kırpma, renk düzeltmesi ya da filigran
+      kaldırma yapılmadı. CC BY-SA lisanslı görsellerin bu sitedeki kopyaları da aynı lisansla paylaşılır.
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-head {
+    padding-block: var(--space-2) var(--space-5);
+  }
+
+  .page-head .lead {
+    max-width: 70ch;
+  }
+
+  .rules {
+    margin-bottom: var(--space-5);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+
+  caption {
+    text-align: left;
+    padding: var(--space-3);
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  thead th {
+    background: var(--bg);
+    color: var(--heading);
+  }
+
+  tbody th {
+    font-weight: 600;
+  }
+
+  td div + div {
+    margin-top: var(--space-1);
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .foot {
+    margin-top: var(--space-4);
+    font-size: var(--fs-sm);
+  }
+</style>

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ProductDetail from '../../components/ProductDetail.astro';
+import { getSets, getRelated } from '../../lib/catalog.js';
+import { productJsonLd } from '../../lib/structured-data.js';
+
+export async function getStaticPaths() {
+  const sets = await getSets();
+  return sets.map((product) => ({ params: { slug: product.handle }, props: { product } }));
+}
+
+const { product } = Astro.props;
+const related = await getRelated(product, 4);
+---
+
+<BaseLayout
+  title={product.title}
+  description={`${product.summary} Paket içeriği, parça kondisyonları ve görseller.`}
+  image={product.images[0]?.url}
+  type="product"
+  current="collections"
+  jsonLd={[productJsonLd(product, Astro.site)]}
+>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { label: 'Ana Sayfa', href: '/' },
+        { label: 'Koleksiyonlar', href: '/koleksiyonlar/' },
+        { label: product.title },
+      ]}
+    />
+    <ProductDetail product={product} related={related} />
+  </div>
+</BaseLayout>

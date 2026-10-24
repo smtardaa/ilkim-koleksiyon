@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ProductListing from '../../components/ProductListing.astro';
+import { categories, categoryUrl } from '../../config/categories.js';
+import { getProductsByCategory } from '../../lib/catalog.js';
+
+export function getStaticPaths() {
+  return categories.map((category) => ({ params: { kategori: category.slug }, props: { category } }));
+}
+
+const { category } = Astro.props;
+const products = await getProductsByCategory(category.slug);
+const others = categories.filter((c) => c.slug !== category.slug);
+---
+
+<BaseLayout title={category.name} description={`${category.name}: ${category.description}`} current="shop">
+  <div class="container">
+    <Breadcrumbs
+      items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Mağaza', href: '/magaza/' }, { label: category.name }]}
+    />
+    <header class="page-head">
+      <h1>{category.name}</h1>
+      <p class="lead">{category.description}</p>
+    </header>
+
+    {
+      products.length ? (
+        <ProductListing products={products} showCategoryFilter={false} />
+      ) : (
+        <p class="notice">Bu kategoride henüz ürün yok.</p>
+      )
+    }
+
+    <nav class="other-cats" aria-labelledby="diger-kategoriler">
+      <h2 id="diger-kategoriler">Diğer kategoriler</h2>
+      <ul>
+        {
+          others.map((c) => (
+            <li>
+              <a href={categoryUrl(c.slug)}>{c.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-head {
+    padding-block: var(--space-2) var(--space-5);
+  }
+
+  .page-head .lead {
+    margin: 0;
+  }
+
+  .other-cats {
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--line);
+  }
+
+  .other-cats h2 {
+    font-size: var(--fs-md);
+  }
+
+  .other-cats ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+  }
+
+  .other-cats a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+</style>

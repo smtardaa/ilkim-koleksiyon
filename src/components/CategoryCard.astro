@@ -1,0 +1,92 @@
+---
+/**
+ * Dikey kategori kartı. Ad, görselin üzerine değil altındaki düz zemine
+ * yazılır; böylece görsel ne olursa olsun okunabilir kalır.
+ */
+import { categoryUrl } from '../config/categories.js';
+import { getCategoryImage } from '../lib/catalog.js';
+
+const { category, count } = Astro.props;
+const image = await getCategoryImage(category);
+---
+
+<li class="cat">
+  <a href={categoryUrl(category.slug)}>
+    <span class="cat__media">
+      {image && <img src={image.url} alt="" width={image.width} height={image.height} loading="lazy" decoding="async" />}
+    </span>
+    <span class="cat__body">
+      <span class="cat__name">{category.name}</span>
+      {typeof count === 'number' && <span class="cat__count">{count} ürün</span>}
+    </span>
+  </a>
+</li>
+
+<style>
+  .cat a {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    text-decoration: none;
+    color: var(--heading);
+    transition:
+      border-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .cat a:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    color: var(--heading);
+  }
+
+  .cat__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    background: var(--photo-bg);
+  }
+
+  .cat__media img {
+    position: absolute;
+    top: 6%;
+    left: 6%;
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cat__media img {
+      transition: transform 240ms var(--ease);
+    }
+
+    .cat a:hover .cat__media img {
+      transform: scale(1.03);
+    }
+  }
+
+  .cat__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    flex: 1;
+  }
+
+  .cat__name {
+    font-weight: 650;
+    font-size: var(--fs-base);
+    line-height: 1.3;
+    color: var(--heading);
+  }
+
+  .cat__count {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Icon from '../components/Icon.astro';
+import { store } from '../config/store.js';
+---
+
+<BaseLayout
+  title="Hakkımızda"
+  description="İlkim Koleksiyon hakkında: eski para ve koleksiyon ürünlerini nasıl sunduğumuz."
+  current="about"
+>
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Hakkımızda' }]} />
+    <div class="about">
+      <header>
+        <h1>Hakkımızda</h1>
+        {
+          store.about.story ? (
+            <p class="lead">{store.about.story}</p>
+          ) : (
+            <p class="notice notice--demo">
+              <Icon name="info" size={18} />
+              <span>
+                İşletmenin kendi hikâyesi, kuruluş yılı ve uzmanlık geçmişi işletmeden bilgi geldiğinde bu alana
+                eklenecek. Demo içinde bu bilgiler bilerek boş bırakıldı.
+              </span>
+            </p>
+          )
+        }
+      </header>
+
+      <section aria-labelledby="nasil">
+        <h2 id="nasil">Ürünleri nasıl sunuyoruz</h2>
+        <ul class="principles">
+          <li>
+            <h3>Kesilmeyen fotoğraflar</h3>
+            <p>Parçalar kenarları kesilmeden, mümkün olduğunda iki yüzüyle gösterilir; tam ekranda yakınlaştırılabilir.</p>
+          </li>
+          <li>
+            <h3>Açık kondisyon bilgisi</h3>
+            <p>Kondisyon derecesi, kondisyonu etkileyen kusurlarla birlikte ürün sayfasında listelenir.</p>
+          </li>
+          <li>
+            <h3>Düzenli ürün bilgisi</h3>
+            <p>Ülke, dönem, yıl, ölçü ve varsa katalog numarası ile sertifika bilgileri aynı düzende yer alır.</p>
+          </li>
+          <li>
+            <h3>Soru sormak kolay</h3>
+            <p>Her ürün sayfasından o ürün hakkında doğrudan soru sorabilirsiniz.</p>
+          </li>
+        </ul>
+      </section>
+
+      <p>
+        <a class="btn btn--primary" href="/magaza/">Mağazaya git</a>
+        <a class="btn btn--secondary" href="/iletisim/">İletişim</a>
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .about {
+    max-width: 820px;
+    display: grid;
+    gap: var(--space-6);
+    padding-top: var(--space-2);
+  }
+
+  .principles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+
+  .principles li {
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .principles p {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  .about > p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>

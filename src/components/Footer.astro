@@ -1,0 +1,147 @@
+---
+import Brand from './Brand.astro';
+import ContactInfo from './ContactInfo.astro';
+import { categories, categoryUrl } from '../config/categories.js';
+import { mainNav } from '../config/navigation.js';
+import { store } from '../config/store.js';
+
+const year = new Date().getFullYear();
+const infoLinks = mainNav.filter((n) => !['home', 'shop'].includes(n.key));
+---
+
+<footer class="site-footer on-dark">
+  <div class="container site-footer__grid">
+    <div class="site-footer__brand">
+      <Brand class="footer-brand" />
+      <p>Eski paralar ve koleksiyon ürünleri.</p>
+    </div>
+
+    <nav aria-labelledby="footer-shop">
+      <h2 id="footer-shop">Mağaza</h2>
+      <ul>
+        <li><a href="/magaza/">Tüm ürünler</a></li>
+        {
+          categories.map((c) => (
+            <li>
+              <a href={categoryUrl(c.slug)}>{c.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-labelledby="footer-info">
+      <h2 id="footer-info">Bilgi</h2>
+      <ul>
+        {
+          infoLinks.map((n) => (
+            <li>
+              <a href={n.href}>{n.label}</a>
+            </li>
+          ))
+        }
+        <li><a href="/sepet/">Sepet</a></li>
+        <li><a href="/kaynaklar/">Ürün ve görsel kaynakları</a></li>
+      </ul>
+    </nav>
+
+    <section aria-labelledby="footer-contact">
+      <h2 id="footer-contact">İletişim</h2>
+      <ContactInfo variant="compact" />
+    </section>
+  </div>
+
+  <div class="container site-footer__bottom">
+    <p>© {year} {store.name}</p>
+    {
+      store.isDemo && (
+        <p>
+          Bu site bir tasarım demosudur. Ürün içerikleri örnek olarak hazırlanmıştır; gerçek ödeme ve sipariş
+          alınmaz.
+        </p>
+      )
+    }
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--bg-deep);
+    color: var(--text);
+    padding-block: var(--space-7) var(--space-5);
+    border-top: 1px solid var(--line-strong);
+    font-size: var(--fs-sm);
+  }
+
+  .site-footer__grid {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 640px) {
+    .site-footer__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-footer__grid {
+      grid-template-columns: 1.2fr 1.2fr 1fr 1.4fr;
+    }
+  }
+
+  .site-footer :global(.footer-brand) {
+    color: var(--text);
+  }
+
+  .site-footer :global(.footer-brand:hover) {
+    color: var(--c-white);
+  }
+
+  h2 {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: var(--space-3);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+  }
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--c-white);
+    text-decoration: underline;
+  }
+
+  .site-footer__bottom {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    color: var(--muted);
+    font-size: var(--fs-xs);
+  }
+
+  .site-footer__bottom p {
+    margin: 0;
+  }
+</style>

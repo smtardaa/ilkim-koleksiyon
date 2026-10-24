@@ -1,0 +1,183 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getSets, productUrl } from '../../lib/catalog.js';
+import { formatPrice, stockText } from '../../lib/format.js';
+import { imageAttrs } from '../../lib/images.js';
+
+const sets = await getSets();
+---
+
+<BaseLayout
+  title="Koleksiyonlar"
+  description="Birden fazla parçadan oluşan seriler, dosyalar ve koleksiyon paketleri; her paketin içerik listesiyle."
+  current="collections"
+>
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'Koleksiyonlar' }]} />
+    <header class="page-head">
+      <h1>Koleksiyonlar</h1>
+      <p class="lead">
+        Seriler, dosyalar ve paketler. Her paketin sayfasında içindeki parçaların listesi ve kondisyonları yer alır.
+      </p>
+    </header>
+
+    <ul class="sets">
+      {
+        sets.map((s, i) => {
+          const sold = !s.availableForSale;
+          return (
+            <li class="set">
+              <div class="set__media">
+                <img
+                  {...imageAttrs(s.images[0], { sizes: '(min-width: 900px) 440px, 100vw' })}
+                  loading={i < 2 ? 'eager' : 'lazy'}
+                  decoding="async"
+                />
+              </div>
+              <div class="set__body">
+                <span class="eyebrow">{s.pieceCount} parça · {s.yearLabel ?? s.year}</span>
+                <h2>
+                  <a href={productUrl(s)}>{s.title}</a>
+                </h2>
+                <p class="set__summary">{s.summary}</p>
+                <p class="set__price">
+                  {formatPrice(s.price.amount, s.price.currencyCode)}{' '}
+                  {s.price.isExample && <span class="example-tag">örnek fiyat</span>}
+                </p>
+                <p class="set__meta">
+                  <span class:list={['stock', sold ? 'stock--sold' : 'stock--in']}>{stockText(s)}</span>
+                </p>
+                <details class="set__preview">
+                  <summary>İçindeki parçalar</summary>
+                  <ul>
+                    {s.setItems.map((item) => (
+                      <li>
+                        {item.title}
+                        {item.year ? ` (${item.year})` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                <a class="btn btn--secondary set__cta" href={productUrl(s)}>
+                  Paketi incele<span class="visually-hidden">: {s.title}</span>
+                </a>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .page-head {
+    padding-block: var(--space-2) var(--space-6);
+  }
+
+  .page-head .lead {
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  .sets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .set {
+    display: grid;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  @media (min-width: 760px) {
+    .set {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+  }
+
+  .set__media {
+    position: relative;
+    background: var(--photo-bg);
+    aspect-ratio: 4 / 3;
+  }
+
+  .set__media img {
+    position: absolute;
+    top: 5%;
+    left: 5%;
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+  }
+
+  .set__body {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .set__body h2 {
+    font-size: var(--fs-lg);
+    margin: 0;
+  }
+
+  .set__body h2 a {
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  .set__body h2 a:hover {
+    text-decoration: underline;
+  }
+
+  .set__summary {
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .set__price {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--heading);
+    margin: 0;
+  }
+
+  .set__meta {
+    font-size: var(--fs-sm);
+    margin: 0;
+  }
+
+  .set__preview {
+    font-size: var(--fs-sm);
+  }
+
+  .set__preview summary {
+    cursor: pointer;
+    min-height: var(--tap);
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--heading);
+  }
+
+  .set__preview ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: var(--space-5);
+  }
+
+  .set__cta {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+</style>

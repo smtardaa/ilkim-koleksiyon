@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ProductDetail from '../../components/ProductDetail.astro';
+import { getSingles, getRelated } from '../../lib/catalog.js';
+import { getCategory, categoryUrl } from '../../config/categories.js';
+import { productJsonLd } from '../../lib/structured-data.js';
+
+export async function getStaticPaths() {
+  const products = await getSingles();
+  return products.map((product) => ({ params: { slug: product.handle }, props: { product } }));
+}
+
+const { product } = Astro.props;
+const category = getCategory(product.category);
+const related = await getRelated(product, 4);
+---
+
+<BaseLayout
+  title={product.title}
+  description={`${product.summary} ${product.country}, ${product.period}.`}
+  image={product.images[0]?.url}
+  type="product"
+  current="shop"
+  jsonLd={[productJsonLd(product, Astro.site)]}
+>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { label: 'Ana Sayfa', href: '/' },
+        { label: 'Mağaza', href: '/magaza/' },
+        { label: category.name, href: categoryUrl(category.slug) },
+        { label: product.title },
+      ]}
+    />
+    <ProductDetail product={product} related={related} />
+  </div>
+</BaseLayout>

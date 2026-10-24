@@ -1,0 +1,149 @@
+---
+/**
+ * Mağaza iletişim bilgileri. Değerler src/config/store.js'ten gelir.
+ * Henüz girilmemiş alanlar "İşletme tarafından eklenecek" olarak gösterilir;
+ * uydurma adres, telefon veya bağlantı üretilmez.
+ */
+import Icon from './Icon.astro';
+import { store, whatsappLink, socialLabels } from '../config/store.js';
+
+const { variant = 'full' } = Astro.props;
+const c = store.contact;
+const wa = whatsappLink();
+const socials = Object.entries(store.social).filter(([, url]) => url);
+const missing = 'İşletme tarafından eklenecek';
+---
+
+<dl class:list={['contact', `contact--${variant}`]}>
+  <div class="contact__row">
+    <dt><Icon name="pin" size={18} /> Adres</dt>
+    <dd>
+      {c.address ? <address>{c.address}</address> : <span class="placeholder-value">{missing}</span>}
+      {c.mapUrl && <a href={c.mapUrl} rel="noopener" target="_blank">Haritada göster</a>}
+    </dd>
+  </div>
+  <div class="contact__row">
+    <dt><Icon name="clock" size={18} /> Çalışma saatleri</dt>
+    <dd>
+      {
+        c.hours ? (
+          <ul>{c.hours.map((h) => <li>{h.days}: {h.time}</li>)}</ul>
+        ) : (
+          <span class="placeholder-value">{missing}</span>
+        )
+      }
+    </dd>
+  </div>
+  <div class="contact__row">
+    <dt><Icon name="phone" size={18} /> Telefon</dt>
+    <dd>
+      {
+        c.phone ? (
+          <a href={`tel:${c.phone.replace(/[^\d+]/g, '')}`}>{c.phone}</a>
+        ) : (
+          <span class="placeholder-value">{missing}</span>
+        )
+      }
+    </dd>
+  </div>
+  <div class="contact__row">
+    <dt><Icon name="whatsapp" size={18} /> WhatsApp</dt>
+    <dd>
+      {
+        wa ? (
+          <a href={wa} rel="noopener" target="_blank">WhatsApp’tan yazın</a>
+        ) : (
+          <span class="placeholder-value">{missing}</span>
+        )
+      }
+    </dd>
+  </div>
+  {
+    variant === 'full' && (
+      <div class="contact__row">
+        <dt><Icon name="mail" size={18} /> E-posta</dt>
+        <dd>
+          {c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : <span class="placeholder-value">{missing}</span>}
+        </dd>
+      </div>
+    )
+  }
+  <div class="contact__row">
+    <dt><Icon name="instagram" size={18} /> Sosyal medya</dt>
+    <dd>
+      {
+        socials.length ? (
+          <ul class="contact__social">
+            {socials.map(([key, url]) => (
+              <li>
+                <a href={url} rel="noopener" target="_blank">{socialLabels[key]}</a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span class="placeholder-value">{missing}</span>
+        )
+      }
+    </dd>
+  </div>
+</dl>
+
+<style>
+  .contact {
+    margin: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .contact__row {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0 0 0 26px;
+  }
+
+  address {
+    font-style: normal;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .contact__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  @media (min-width: 700px) {
+    .contact--full {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5) var(--space-6);
+    }
+  }
+
+  :global(.on-dark) .contact dt,
+  :global(.on-dark) .contact .placeholder-value {
+    color: var(--muted);
+  }
+
+  :global(.on-dark) .contact a {
+    color: var(--text);
+  }
+</style>

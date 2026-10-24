@@ -1,0 +1,223 @@
+---
+/**
+ * Ürün kartı. Fotoğraf, ad ve fiyat birinci önceliktedir; diğer bilgiler
+ * sakin bir hiyerarşiyle verilir. Kartın tamamı ürün sayfasına götürür,
+ * ancak bağlantı yalnızca başlıktadır (ekran okuyucu tek bağlantı duyar).
+ */
+import { productUrl, searchText } from '../lib/catalog.js';
+import { formatPrice, conditionText, stockText, yearText } from '../lib/format.js';
+import { imageAttrs } from '../lib/images.js';
+
+const { product, headingLevel = 3, loading = 'lazy', withData = false } = Astro.props;
+const H = `h${headingLevel}`;
+const image = product.images[0];
+const sold = !product.availableForSale;
+
+const data = withData
+  ? {
+      'data-product': '',
+      'data-search': searchText(product),
+      'data-category': product.category,
+      'data-country': product.country,
+      'data-period': product.period,
+      'data-year': product.year ?? '',
+      'data-price': product.price.amount,
+      'data-created': product.createdAt,
+      'data-available': String(product.availableForSale),
+    }
+  : {};
+---
+
+<li class:list={['card', { 'card--sold': sold }]} {...data}>
+  <div class="card__media">
+    <img
+      {...imageAttrs(image, { sizes: '(min-width: 1180px) 290px, (min-width: 900px) 30vw, 50vw', maxWidth: 960 })}
+      loading={loading}
+      decoding="async"
+    />
+    {product.kind === 'set' && <span class="badge card__flag">{product.pieceCount} parça</span>}
+    {sold && <span class="badge badge--sold card__flag card__flag--right">Satıldı</span>}
+  </div>
+  <div class="card__body">
+    <H class="card__title">
+      <a href={productUrl(product)}>{product.title}</a>
+    </H>
+    <p class="card__price">
+      {formatPrice(product.price.amount, product.price.currencyCode)}
+      {product.price.isExample && <span class="example-tag">örnek fiyat</span>}
+    </p>
+    <dl class="card__meta">
+      <div>
+        <dt class="visually-hidden">Ülke ve dönem</dt>
+        <dd>{product.country} · {product.period}</dd>
+      </div>
+      <div>
+        <dt>Yıl</dt>
+        <dd>{yearText(product)}</dd>
+      </div>
+      {
+        (product.certificate || product.condition) && (
+          <div>
+            <dt>Kondisyon</dt>
+            <dd>
+              {product.certificate
+                ? `${product.certificate.issuer} ${product.certificate.grade}`
+                : conditionText(product.condition)}
+            </dd>
+          </div>
+        )
+      }
+    </dl>
+    <p class:list={['stock', sold ? 'stock--sold' : 'stock--in']}>{stockText(product)}</p>
+  </div>
+</li>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition:
+      border-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+  }
+
+  .card:focus-within {
+    border-color: var(--c-rust);
+  }
+
+  .card:has(.card__title a:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .card__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--photo-bg);
+  }
+
+  .card__media img {
+    position: absolute;
+    top: 8%;
+    left: 8%;
+    width: 84%;
+    height: 84%;
+    object-fit: contain;
+  }
+
+  .card--sold .card__media img {
+    opacity: 0.6;
+  }
+
+  .card__flag {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+  }
+
+  .card__flag--right {
+    left: auto;
+    right: var(--space-3);
+  }
+
+  .card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    flex: 1;
+  }
+
+  .card__title {
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .card__title a {
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  /* Tüm kartı tıklanabilir yapar */
+  .card__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .card__title a:focus-visible {
+    outline: none;
+  }
+
+  .card__title a:hover {
+    text-decoration: underline;
+  }
+
+  .card__price .example-tag {
+    margin-left: var(--space-1);
+  }
+
+  .card__price {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--heading);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card--sold .card__price {
+    color: var(--muted);
+  }
+
+  .card__meta {
+    margin: 0;
+    display: grid;
+    gap: 2px;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .card__meta div {
+    display: flex;
+    gap: 0.35em;
+    flex-wrap: wrap;
+  }
+
+  .card__meta dt::after {
+    content: ':';
+  }
+
+  .card__meta dd {
+    margin: 0;
+    color: var(--heading);
+  }
+
+  .card .stock {
+    margin: auto 0 0;
+    padding-top: var(--space-2);
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 600px) {
+    .card__title {
+      font-size: var(--fs-md);
+    }
+
+    .card__meta {
+      font-size: var(--fs-sm);
+    }
+  }
+</style>

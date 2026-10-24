@@ -1,0 +1,17 @@
+{
+  "name": "ilkim-koleksiyon-demo",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/check-port.mjs && astro dev --port 5500",
+    "build": "astro build",
+    "preview": "node scripts/check-port.mjs && astro preview --port 5500",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource/federo": "^5.3.0",
+    "astro": "^7.4.2"
+  }
+}

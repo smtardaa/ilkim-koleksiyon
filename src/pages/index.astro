@@ -1,0 +1,428 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import ContactInfo from '../components/ContactInfo.astro';
+import Icon from '../components/Icon.astro';
+import { primaryCategories, secondaryCategory, categoryUrl } from '../config/categories.js';
+import { guideCards } from '../config/guides.js';
+import { store } from '../config/store.js';
+import { getAllProducts, getNewArrivals, getFeatured } from '../lib/catalog.js';
+
+const all = await getAllProducts();
+const countFor = (slug) => all.filter((p) => p.category === slug).length;
+const newArrivals = await getNewArrivals(4);
+const featured = await getFeatured(4, newArrivals);
+
+const orgJsonLd = Astro.site
+  ? [{ '@context': 'https://schema.org', '@type': 'Store', name: store.name, url: Astro.site.href }]
+  : [];
+---
+
+<BaseLayout
+  current="home"
+  description="İlkim Koleksiyon’da Cumhuriyet ve Osmanlı dönemi paralar, yabancı paralar, sertifikalı parçalar ve koleksiyon ürünlerini inceleyin."
+  jsonLd={orgJsonLd}
+>
+  <!-- A. Tanıtım ve keşif -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div class="hero__intro">
+        <h1 id="hero-title">Eski paralar ve koleksiyon parçaları</h1>
+        <p class="lead">
+          Cumhuriyet ve Osmanlı dönemi paralardan yabancı ve sertifikalı parçalara kadar her ürünü yakından
+          inceleyin. Dönem, yıl, ölçü ve varsa katalog ile sertifika bilgileri ürün sayfasında açıkça yer alır.
+        </p>
+        <a class="btn btn--primary" href="/magaza/">
+          Mağazaya git <Icon name="arrow" size={18} />
+        </a>
+      </div>
+
+      <div class="hero__search">
+        <h2 id="kesfet">Koleksiyonu keşfet</h2>
+        <form action="/magaza/" method="get" role="search" aria-labelledby="kesfet">
+          <label class="label" for="hero-q">Ürün ara</label>
+          <div class="hero__search-row">
+            <input
+              class="input"
+              id="hero-q"
+              name="q"
+              type="search"
+              placeholder="Ürün adı, ülke, dönem veya yıl ara"
+              autocomplete="off"
+              enterkeyhint="search"
+            />
+            <button class="btn btn--primary" type="submit">
+              <Icon name="search" size={18} /> Ara
+            </button>
+          </div>
+        </form>
+        <p class="hero__hint">
+          Örneğin: <a href="/magaza/?q=osmanl%C4%B1">Osmanlı</a>,{' '}
+          <a href="/magaza/?q=1927">1927</a>,{' '}
+          <a href="/magaza/?q=madalya">madalya</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- B. Kategoriler -->
+  <section class="section section--categories" aria-labelledby="kategoriler">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="kategoriler">Kategoriler</h2>
+        <a class="link-arrow" href="/magaza/">Tüm ürünler <Icon name="arrow" size={18} /></a>
+      </div>
+      <ul class="cat-grid">
+        {primaryCategories.map((c) => <CategoryCard category={c} count={countFor(c.slug)} />)}
+      </ul>
+      <a class="cat-extra" href={categoryUrl(secondaryCategory.slug)}>
+        <span>
+          <span class="cat-extra__name">{secondaryCategory.name}</span>
+          <span class="cat-extra__desc">{secondaryCategory.description}</span>
+        </span>
+        <Icon name="arrow" />
+      </a>
+    </div>
+  </section>
+
+  <!-- C. Yeni eklenenler -->
+  <section class="section section--deep" aria-labelledby="yeni">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="yeni">Yeni Eklenenler</h2>
+        <a class="link-arrow" href="/magaza/?sirala=yeni">Tümünü gör <Icon name="arrow" size={18} /></a>
+      </div>
+      <ul class="product-grid product-grid--4">
+        {newArrivals.map((p) => <ProductCard product={p} />)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- D. Seçkin parçalar -->
+  <section class="section" aria-labelledby="seckin">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="seckin">Seçkin Parçalar</h2>
+          <p>Mağaza ekibinin öne çıkardığı parçalar.</p>
+        </div>
+      </div>
+      <ul class="product-grid product-grid--4">
+        {featured.map((p) => <ProductCard product={p} />)}
+      </ul>
+    </div>
+  </section>
+
+  <!-- E. İşletmenin hikâyesi -->
+  <section class="section section--deep" aria-labelledby="hikaye">
+    <div class="container story">
+      <div>
+        <span class="eyebrow">Hakkımızda</span>
+        <h2 id="hikaye">İlkim Koleksiyon</h2>
+      </div>
+      <div>
+        {
+          store.about.story ? (
+            <p class="lead story__text">{store.about.story}</p>
+          ) : (
+            <p class="lead story__text">
+              Koleksiyonerler ve tarihî paralara ilgi duyanlar için seçilmiş parçalar sunuyoruz.
+              <span class="placeholder-value"> İşletmenin kendi hikâyesi buraya eklenecek.</span>
+            </p>
+          )
+        }
+        <a class="link-arrow" href="/hakkimizda/">Hakkımızda <Icon name="arrow" size={18} /></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- F. Koleksiyon rehberi -->
+  <section class="section" aria-labelledby="rehber">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <h2 id="rehber">Koleksiyon Rehberi</h2>
+          <p>Yeni başlayanlar için kısa notlar.</p>
+        </div>
+        <a class="link-arrow" href="/sss/">Tüm sorular <Icon name="arrow" size={18} /></a>
+      </div>
+      <ul class="guide-grid">
+        {
+          guideCards.map((g) => (
+            <li class="guide">
+              <Icon name={g.icon} size={26} class="guide__icon" />
+              <h3>
+                <a href={g.href}>{g.title}</a>
+              </h3>
+              <p>{g.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- G. Mağaza bilgileri -->
+  <section class="section section--bordered" aria-labelledby="magaza-bilgi">
+    <div class="container info">
+      <div>
+        <h2 id="magaza-bilgi">Mağaza Bilgileri</h2>
+        <p class="info__text">Bir ürün hakkında soru sormak veya mağazayı ziyaret etmek için.</p>
+        <a class="btn btn--secondary" href="/iletisim/">İletişim sayfası</a>
+      </div>
+      <ContactInfo />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: var(--space-6) var(--space-6);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero__grid {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .hero {
+      padding-block: var(--space-7);
+    }
+
+    .hero__grid {
+      grid-template-columns: 1.1fr 1fr;
+      gap: var(--space-8);
+    }
+  }
+
+  .hero h1 {
+    max-width: 16ch;
+  }
+
+  .hero .lead {
+    max-width: 52ch;
+    margin-bottom: var(--space-5);
+  }
+
+  .hero__search {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (min-width: 900px) {
+    .hero__search {
+      padding: var(--space-6);
+    }
+  }
+
+  .hero__search h2 {
+    font-size: var(--fs-lg);
+  }
+
+  .hero__search form {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .hero__search-row {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .hero__search-row .input {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    font-size: var(--fs-md);
+  }
+
+  .hero__search-row .btn {
+    min-height: 52px;
+  }
+
+  @media (max-width: 479px) {
+    .hero .lead {
+      font-size: var(--fs-base);
+    }
+
+    .hero__search-row {
+      flex-wrap: wrap;
+    }
+
+    .hero__search-row .btn {
+      width: 100%;
+    }
+  }
+
+  .hero__hint {
+    margin: var(--space-3) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  .section--categories {
+    padding-top: var(--space-6);
+  }
+
+  .cat-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 339px) {
+    .cat-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (min-width: 640px) {
+    .cat-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .cat-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .cat-extra {
+    margin-top: var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  .cat-extra:hover {
+    background: var(--surface-hover);
+    color: var(--heading);
+  }
+
+  .cat-extra > span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .cat-extra__name {
+    font-weight: 650;
+    font-size: var(--fs-md);
+  }
+
+  .cat-extra__desc {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  .story {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 900px) {
+    .story {
+      grid-template-columns: 1fr 2fr;
+      gap: var(--space-7);
+    }
+  }
+
+  .story h2 {
+    font-family: var(--font-brand);
+    font-weight: 400;
+    letter-spacing: 0.03em;
+  }
+
+  .story__text {
+    color: var(--heading);
+    max-width: 60ch;
+  }
+
+  .guide-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  }
+
+  .guide {
+    position: relative;
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .guide:hover {
+    border-color: var(--line-strong);
+  }
+
+  .guide:has(a:focus-visible) {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .guide :global(.guide__icon) {
+    color: var(--accent);
+    margin-bottom: var(--space-3);
+  }
+
+  .guide h3 {
+    margin-bottom: var(--space-2);
+  }
+
+  .guide h3 a {
+    color: var(--heading);
+    text-decoration: none;
+  }
+
+  .guide h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .guide h3 a:focus-visible {
+    outline: none;
+  }
+
+  .guide p {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  .info {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 900px) {
+    .info {
+      grid-template-columns: 1fr 2fr;
+    }
+  }
+
+  .info__text {
+    color: var(--muted);
+  }
+</style>

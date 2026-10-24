@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import ContactInfo from '../components/ContactInfo.astro';
+import Icon from '../components/Icon.astro';
+import { hasContactInfo } from '../config/store.js';
+---
+
+<BaseLayout title="İletişim" description="İlkim Koleksiyon iletişim bilgileri, çalışma saatleri ve adres." current="contact">
+  <div class="container">
+    <Breadcrumbs items={[{ label: 'Ana Sayfa', href: '/' }, { label: 'İletişim' }]} />
+    <div class="contact-page">
+      <header>
+        <h1>İletişim</h1>
+        <p class="lead">Bir ürün hakkında soru sormak için ürün sayfasındaki “WhatsApp’tan sor” bağlantısını da kullanabilirsiniz.</p>
+      </header>
+
+      {
+        !hasContactInfo && (
+          <p class="notice notice--demo">
+            <Icon name="info" size={18} />
+            <span>
+              Adres, telefon, WhatsApp, çalışma saatleri ve sosyal medya hesapları henüz eklenmedi. Bilgiler
+              <code>src/config/store.js</code> dosyasından tek noktada girilecek.
+            </span>
+          </p>
+        )
+      }
+
+      <section class="panel" aria-labelledby="bilgiler">
+        <h2 id="bilgiler">Mağaza bilgileri</h2>
+        <ContactInfo />
+      </section>
+
+      <section class="panel" aria-labelledby="harita">
+        <h2 id="harita">Konum</h2>
+        <p class="placeholder-value">Harita, işletmenin adresi eklendiğinde gösterilecek.</p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .contact-page {
+    max-width: 880px;
+    display: grid;
+    gap: var(--space-5);
+    padding-top: var(--space-2);
+  }
+
+  .contact-page header .lead {
+    margin: 0;
+  }
+
+  .panel {
+    padding: var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+  }
+
+  .panel h2 {
+    font-size: var(--fs-lg);
+    margin-bottom: var(--space-4);
+  }
+
+  .panel p {
+    margin: 0;
+  }
+
+  code {
+    font-size: 0.9em;
+  }
+</style>

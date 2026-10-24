@@ -1,0 +1,303 @@
+---
+import Brand from './Brand.astro';
+import Icon from './Icon.astro';
+import { store } from '../config/store.js';
+import { mainNav } from '../config/navigation.js';
+
+const { current } = Astro.props;
+
+---
+
+{
+  store.isDemo && (
+    <div class="demo-bar">
+      <div class="container">
+        <strong>Demo mağaza.</strong> Ürünler gerçek koleksiyon kayıtlarından örneklendi; fiyat ve stoklar
+        örnektir, satış yapılmaz.
+      </div>
+    </div>
+  )
+}
+
+<header class="site-header" data-header>
+  <div class="container site-header__inner">
+    <button
+      class="icon-btn site-header__menu-btn"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-nav"
+      data-menu-toggle
+    >
+      <span class="visually-hidden" data-menu-label>Menüyü aç</span>
+      <Icon name="menu" class="icon-open" />
+      <Icon name="close" class="icon-close" />
+    </button>
+
+    <Brand />
+
+    <nav id="site-nav" class="site-nav" aria-label="Ana menü" data-menu>
+      <ul>
+        {
+          mainNav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={current === item.key ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <button
+        class="icon-btn"
+        type="button"
+        aria-expanded="false"
+        aria-controls="header-search"
+        data-search-toggle
+      >
+        <span class="visually-hidden">Ürün ara</span>
+        <Icon name="search" />
+      </button>
+      <a class="icon-btn" href="/sepet/" data-cart-link aria-current={current === 'cart' ? 'page' : undefined}>
+        <span class="visually-hidden" data-cart-label>Sepet</span>
+        <Icon name="cart" />
+        <span class="cart-count" data-cart-count hidden aria-hidden="true"></span>
+      </a>
+    </div>
+  </div>
+
+  <div id="header-search" class="header-search" hidden data-search-panel>
+    <form class="container header-search__form" action="/magaza/" method="get" role="search">
+      <label class="visually-hidden" for="header-search-q">Ürün ara</label>
+      <input
+        class="input"
+        id="header-search-q"
+        name="q"
+        type="search"
+        placeholder="Ürün adı, ülke, dönem veya yıl ara"
+        autocomplete="off"
+        enterkeyhint="search"
+      />
+      <button class="btn btn--primary" type="submit">Ara</button>
+    </form>
+  </div>
+</header>
+
+<script>
+  import { cart, countItems } from '../scripts/cart/store.js';
+
+  const header = document.querySelector('[data-header]');
+  const menuBtn = header.querySelector('[data-menu-toggle]');
+  const menu = header.querySelector('[data-menu]');
+  const menuLabel = header.querySelector('[data-menu-label]');
+  const searchBtn = header.querySelector('[data-search-toggle]');
+  const searchPanel = header.querySelector('[data-search-panel]');
+  const desktop = window.matchMedia('(min-width: 1080px)');
+
+  function setMenu(open, { focusToggle = false } = {}) {
+    menuBtn.setAttribute('aria-expanded', String(open));
+    menuLabel.textContent = open ? 'Menüyü kapat' : 'Menüyü aç';
+    menu.classList.toggle('is-open', open);
+    document.body.classList.toggle('is-locked', open && !desktop.matches);
+    if (open) setSearch(false);
+    if (!open && focusToggle) menuBtn.focus();
+  }
+
+  function setSearch(open) {
+    searchBtn.setAttribute('aria-expanded', String(open));
+    searchPanel.hidden = !open;
+    if (open) {
+      setMenu(false);
+      searchPanel.querySelector('input').focus();
+    }
+  }
+
+  menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
+  searchBtn.addEventListener('click', () => setSearch(searchPanel.hidden));
+  menu.addEventListener('click', (e) => {
+    if (e.target.closest('a')) setMenu(false);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (menu.classList.contains('is-open')) setMenu(false, { focusToggle: true });
+    if (!searchPanel.hidden) {
+      setSearch(false);
+      searchBtn.focus();
+    }
+  });
+
+  desktop.addEventListener('change', () => setMenu(false));
+
+  // Sepet sayacı
+  const countEl = header.querySelector('[data-cart-count]');
+  const cartLabel = header.querySelector('[data-cart-label]');
+  function renderCount(lines) {
+    const n = countItems(lines);
+    countEl.textContent = String(n);
+    countEl.hidden = n === 0;
+    cartLabel.textContent = n ? `Sepet, ${n} ürün` : 'Sepet, boş';
+  }
+  window.addEventListener('cart:change', (e) => renderCount(e.detail.lines));
+  cart.getLines().then(renderCount);
+</script>
+
+<style>
+  .demo-bar {
+    background: var(--c-rust);
+    color: var(--c-white);
+    font-size: var(--fs-xs);
+    padding-block: 0.4rem;
+    text-align: center;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(22 13 9 / 0.96);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: saturate(1.2) blur(8px);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--header-h);
+  }
+
+  .site-header__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .cart-count {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--c-caramel);
+    color: var(--on-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 19px;
+    text-align: center;
+  }
+
+  .site-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .site-nav a {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--heading);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .site-nav a:hover {
+    color: var(--accent);
+  }
+
+  .site-nav a[aria-current='page'] {
+    color: var(--accent);
+    font-weight: 650;
+  }
+
+  .site-header__menu-btn :global(.icon-close),
+  .site-header__menu-btn[aria-expanded='true'] :global(.icon-open) {
+    display: none;
+  }
+
+  .site-header__menu-btn[aria-expanded='true'] :global(.icon-close) {
+    display: block;
+  }
+
+  /* Mobil ve tablet: menü paneli */
+  @media (max-width: 1079px) {
+    .site-nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      height: calc(100dvh - var(--header-h));
+      background: var(--bg-deep);
+      overflow-y: auto;
+      padding: var(--space-4) var(--gutter) var(--space-7);
+      border-top: 1px solid var(--line);
+    }
+
+    .site-nav.is-open {
+      display: block;
+    }
+
+    .site-nav li + li {
+      border-top: 1px solid var(--line);
+    }
+
+    .site-nav a {
+      min-height: 56px;
+      font-size: var(--fs-md);
+    }
+  }
+
+  /* Masaüstü: yatay menü */
+  @media (min-width: 1080px) {
+    .site-header__menu-btn {
+      display: none;
+    }
+
+    .site-nav {
+      margin-left: var(--space-6);
+    }
+
+    .site-nav ul {
+      display: flex;
+      gap: var(--space-5);
+    }
+
+    .site-nav a {
+      position: relative;
+      font-size: var(--fs-sm);
+    }
+
+    .site-nav a[aria-current='page']::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6px;
+      height: 2px;
+      background: var(--c-caramel);
+    }
+  }
+
+  .header-search {
+    border-top: 1px solid var(--line);
+    background: var(--bg-deep);
+    padding-block: var(--space-3);
+  }
+
+  .header-search__form {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .header-search__form .input {
+    flex: 1;
+    min-width: 0;
+  }
+</style>

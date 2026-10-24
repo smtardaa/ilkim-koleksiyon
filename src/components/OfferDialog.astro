@@ -1,0 +1,102 @@
+---
+/**
+ * "Teklif ver" formu — YALNIZCA GÖRSEL DEMO.
+ * Form gönderildiğinde hiçbir veri kaydedilmez, e-posta atılmaz, sunucuya
+ * istek yapılmaz. Kullanıcıya bunun açıkça bildirildiği bir mesaj gösterilir.
+ */
+import Icon from './Icon.astro';
+import { formatPrice } from '../lib/format.js';
+
+const { product } = Astro.props;
+---
+
+<dialog class="offer" data-offer-dialog aria-labelledby="offer-title">
+  <div class="dialog__head">
+    <h2 id="offer-title">Teklif ver</h2>
+    <button class="icon-btn" type="button" data-offer-close>
+      <span class="visually-hidden">Kapat</span>
+      <Icon name="close" />
+    </button>
+  </div>
+  <div class="dialog__body">
+    <p class="notice notice--demo">
+      <Icon name="info" size={18} />
+      <span>
+        <strong>Demo formu.</strong> Bu form şu an hiçbir yere gönderilmez; teklifiniz kaydedilmez ve size dönüş
+        yapılmaz.
+      </span>
+    </p>
+
+    <p class="offer__product">
+      <span>{product.title}</span>
+      <span>Liste fiyatı: <strong>{formatPrice(product.price.amount, product.price.currencyCode)}</strong></span>
+    </p>
+
+    <form class="offer__form" data-offer-form novalidate>
+      <div class="field">
+        <label for="offer-amount">Teklif tutarı (₺)</label>
+        <input class="input" id="offer-amount" name="amount" type="number" inputmode="decimal" min="1" required />
+      </div>
+      <div class="field">
+        <label for="offer-name">Ad soyad</label>
+        <input class="input" id="offer-name" name="name" type="text" autocomplete="name" required />
+      </div>
+      <div class="field">
+        <label for="offer-contact">Telefon veya e-posta</label>
+        <input class="input" id="offer-contact" name="contact" type="text" autocomplete="email" required />
+      </div>
+      <div class="field">
+        <label for="offer-note">Not <span class="hint">(isteğe bağlı)</span></label>
+        <textarea class="textarea" id="offer-note" name="note" rows="3"></textarea>
+      </div>
+      <p class="offer__error" data-offer-error role="alert" hidden>Lütfen teklif tutarını, adınızı ve iletişim bilginizi girin.</p>
+      <button class="btn btn--primary btn--block" type="submit">Teklifi gönder (demo)</button>
+    </form>
+
+    <div class="offer__result" data-offer-result hidden tabindex="-1">
+      <h3>Teklif gönderilmedi</h3>
+      <p>
+        Bu bir demo olduğu için teklif formu henüz bir sisteme bağlı değil. Girdiğiniz bilgiler kaydedilmedi ve
+        işletmeye iletilmedi.
+      </p>
+      <button class="btn btn--secondary" type="button" data-offer-close>Kapat</button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .offer .notice {
+    margin-bottom: var(--space-4);
+  }
+
+  .offer__product {
+    display: grid;
+    gap: 2px;
+    padding-bottom: var(--space-4);
+    margin-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+    font-size: var(--fs-sm);
+  }
+
+  .offer__product span:first-child {
+    font-weight: 650;
+    color: var(--heading);
+    font-size: var(--fs-base);
+  }
+
+  .offer__form {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .offer__error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .offer__result h3 {
+    font-size: var(--fs-lg);
+  }
+</style>
