@@ -1,4 +1,5 @@
 ---
+import { url } from '../lib/paths.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
@@ -14,7 +15,7 @@ import Icon from '../components/Icon.astro';
 
       <div class="cart__empty" data-cart-empty hidden>
         <p>Sepetinizde ürün yok.</p>
-        <a class="btn btn--primary" href="/magaza/">Mağazaya git</a>
+        <a class="btn btn--primary" href={url('/magaza/')}>Mağazaya git</a>
       </div>
 
       <div class="cart__layout" data-cart-filled hidden>

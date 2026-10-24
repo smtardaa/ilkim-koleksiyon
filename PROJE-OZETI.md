@@ -10,6 +10,7 @@
 | Tur | Ne yapıldı |
 | --- | --- |
 | 1 (24 Ekim 2026) | Astro iskeleti, veri katmanı, tüm sayfalar, açık (krem) tema, temsilî SVG ürün çizimleri, sepet/filtre/galeri/teklif etkileşimleri |
+| 3 (25 Ekim 2026) | **GitHub Pages yayını:** `site`/`base` ayarlandı (`/ilkim-koleksiyon`), tüm iç yollar `src/lib/paths.js` → `url()` üzerinden, `.github/workflows/deploy.yml` (withastro/action@v6 + deploy-pages@v5), `public/.nojekyll`. Yerel dev sunucusu kök adresi alt yola yönlendirir. Demo sepeti anahtarı `v2` oldu. |
 | 2 (24–25 Ekim 2026) | Temsilî ürünler kaldırıldı; **gerçek koleksiyon kayıtlarına dayalı 20 ürün ve 1 paket** eklendi. Gerçek, lisanslı fotoğraflar kullanıldı. **#EACEAA tamamen kaldırıldı**, tasarım **koyu kahve temaya** geçti. `npm run dev` artık **http://localhost:5500** adresinde açılıyor ve port kontrolü yapıyor. `/kaynaklar/` sayfası eklendi. |
 
 ---
@@ -67,6 +68,17 @@ Bağımlılıklar: `astro@7.4.2`, `@astrojs/sitemap@3.7.4`, `@fontsource/federo`
 | `DATA_SOURCE` | `mock` | `shopify` henüz uygulanmadı; seçilirse build bilerek hata verir. |
 
 ---
+
+## 2b. GitHub Pages yayını (3. tur)
+
+- Yayın adresi: **https://smtardaa.github.io/ilkim-koleksiyon/** · Repo: `smtardaa/ilkim-koleksiyon`, dal `main`.
+- **Önceki hata:** "Build with Jekyll" adımı başarısız oluyordu, çünkü Pages kaynağı "Deploy from a branch" idi ve GitHub repoyu Jekyll ile derlemeye çalışıyordu. Jekyll, `.astro` dosyalarındaki `---` bölümlerini YAML front matter sanıyordu. Çözüm: Pages kaynağı **GitHub Actions** yapılır ve `.github/workflows/deploy.yml` Astro'nun kendi build'ini kullanır. Astro bileşenleri değiştirilmedi.
+- Workflow: `main`'e push veya elle tetikleme → `actions/checkout@v7` → `withastro/action@v6` (Node 24, npm, `package-lock.json` korunur, `npm run build`, `dist/` artifact) → `actions/deploy-pages@v5`. İzinler: `contents: read`, `pages: write`, `id-token: write`.
+- `astro.config.mjs`: `site = SITE_URL || 'https://smtardaa.github.io'`, `base = BASE_PATH || '/ilkim-koleksiyon'`. Sitemap artık her zaman üretilir (`/sepet/` hariç).
+- **Yollar:** Köke göre yazılmış tüm iç bağlantılar, form adresleri, görseller, favicon ve sitemap bağlantısı `url()` yardımcısından geçer (`src/lib/paths.js`, idempotent). CSS, JS ve font dosyalarını Astro `base`'e göre kendisi üretir.
+- **Sunucu tarafı:** Projede Express, `server.js`, API rotası veya SSR yok. `robots.txt.js` build sırasında statik dosyaya dönüşür. Render veya başka bir backend gerekmez. İleride Shopify webhook'u için sunucusuz fonksiyon gerekecek (§9); bu GitHub Pages'te çalışamaz.
+- **robots.txt notu:** Proje sitelerinde arama motorları yalnızca alan adının kökündeki robots.txt'yi okur; `/ilkim-koleksiyon/robots.txt` dikkate alınmaz. İndeksleme kapatma `noindex` meta etiketiyle yapılır (her sayfada var).
+- Yerel: `npm run dev` → http://localhost:5500 → `/ilkim-koleksiyon/` adresine 302 yönlendirme. `npm run preview` → http://localhost:5500/ilkim-koleksiyon/ (Astro'nun statik önizleme sunucusu Vite eklentilerini çalıştırmadığı için kök yönlendirmesi yok).
 
 ## 3. Mimari
 

@@ -1,4 +1,5 @@
 ---
+import { url } from '../lib/paths.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
@@ -6,14 +7,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <div class="container nf">
     <h1>Sayfa bulunamadı</h1>
     <p class="lead">Aradığınız sayfa taşınmış veya kaldırılmış olabilir. Ürün satılmışsa mağazadan benzerlerine bakabilirsiniz.</p>
-    <form action="/magaza/" method="get" role="search">
+    <form action={url('/magaza/')} method="get" role="search">
       <label class="label" for="nf-q">Ürün ara</label>
       <div class="row">
         <input class="input" id="nf-q" name="q" type="search" placeholder="Ürün adı, ülke, dönem veya yıl ara" />
         <button class="btn btn--primary" type="submit">Ara</button>
       </div>
     </form>
-    <p><a href="/">Ana sayfaya dön</a></p>
+    <p><a href={url('/')}>Ana sayfaya dön</a></p>
   </div>
 </BaseLayout>
 

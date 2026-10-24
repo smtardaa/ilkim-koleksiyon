@@ -6,6 +6,7 @@ import { getDataSource } from './data/index.js';
 import { categories, getCategory } from '../config/categories.js';
 import { compareTr, normalizeTr } from './text.js';
 import { conditionText } from './format.js';
+import { url } from './paths.js';
 
 const source = getDataSource();
 
@@ -58,7 +59,7 @@ export function sortNewest(list) {
 }
 
 export function productUrl(product) {
-  return product.kind === 'set' ? `/koleksiyonlar/${product.handle}/` : `/urun/${product.handle}/`;
+  return url(product.kind === 'set' ? `/koleksiyonlar/${product.handle}/` : `/urun/${product.handle}/`);
 }
 
 export function getCategoryForProduct(product) {

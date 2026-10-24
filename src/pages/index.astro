@@ -1,4 +1,5 @@
 ---
+import { url } from '../lib/paths.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import CategoryCard from '../components/CategoryCard.astro';
@@ -33,14 +34,14 @@ const orgJsonLd = Astro.site
           Cumhuriyet ve Osmanlı dönemi paralardan yabancı ve sertifikalı parçalara kadar her ürünü yakından
           inceleyin. Dönem, yıl, ölçü ve varsa katalog ile sertifika bilgileri ürün sayfasında açıkça yer alır.
         </p>
-        <a class="btn btn--primary" href="/magaza/">
+        <a class="btn btn--primary" href={url('/magaza/')}>
           Mağazaya git <Icon name="arrow" size={18} />
         </a>
       </div>
 
       <div class="hero__search">
         <h2 id="kesfet">Koleksiyonu keşfet</h2>
-        <form action="/magaza/" method="get" role="search" aria-labelledby="kesfet">
+        <form action={url('/magaza/')} method="get" role="search" aria-labelledby="kesfet">
           <label class="label" for="hero-q">Ürün ara</label>
           <div class="hero__search-row">
             <input
@@ -58,9 +59,9 @@ const orgJsonLd = Astro.site
           </div>
         </form>
         <p class="hero__hint">
-          Örneğin: <a href="/magaza/?q=osmanl%C4%B1">Osmanlı</a>,{' '}
-          <a href="/magaza/?q=1927">1927</a>,{' '}
-          <a href="/magaza/?q=madalya">madalya</a>
+          Örneğin: <a href={url('/magaza/?q=osmanl%C4%B1')}>Osmanlı</a>,{' '}
+          <a href={url('/magaza/?q=1927')}>1927</a>,{' '}
+          <a href={url('/magaza/?q=madalya')}>madalya</a>
         </p>
       </div>
     </div>
@@ -71,7 +72,7 @@ const orgJsonLd = Astro.site
     <div class="container">
       <div class="section-head">
         <h2 id="kategoriler">Kategoriler</h2>
-        <a class="link-arrow" href="/magaza/">Tüm ürünler <Icon name="arrow" size={18} /></a>
+        <a class="link-arrow" href={url('/magaza/')}>Tüm ürünler <Icon name="arrow" size={18} /></a>
       </div>
       <ul class="cat-grid">
         {primaryCategories.map((c) => <CategoryCard category={c} count={countFor(c.slug)} />)}
@@ -91,7 +92,7 @@ const orgJsonLd = Astro.site
     <div class="container">
       <div class="section-head">
         <h2 id="yeni">Yeni Eklenenler</h2>
-        <a class="link-arrow" href="/magaza/?sirala=yeni">Tümünü gör <Icon name="arrow" size={18} /></a>
+        <a class="link-arrow" href={url('/magaza/?sirala=yeni')}>Tümünü gör <Icon name="arrow" size={18} /></a>
       </div>
       <ul class="product-grid product-grid--4">
         {newArrivals.map((p) => <ProductCard product={p} />)}
@@ -132,7 +133,7 @@ const orgJsonLd = Astro.site
             </p>
           )
         }
-        <a class="link-arrow" href="/hakkimizda/">Hakkımızda <Icon name="arrow" size={18} /></a>
+        <a class="link-arrow" href={url('/hakkimizda/')}>Hakkımızda <Icon name="arrow" size={18} /></a>
       </div>
     </div>
   </section>
@@ -145,7 +146,7 @@ const orgJsonLd = Astro.site
           <h2 id="rehber">Koleksiyon Rehberi</h2>
           <p>Yeni başlayanlar için kısa notlar.</p>
         </div>
-        <a class="link-arrow" href="/sss/">Tüm sorular <Icon name="arrow" size={18} /></a>
+        <a class="link-arrow" href={url('/sss/')}>Tüm sorular <Icon name="arrow" size={18} /></a>
       </div>
       <ul class="guide-grid">
         {
@@ -169,7 +170,7 @@ const orgJsonLd = Astro.site
       <div>
         <h2 id="magaza-bilgi">Mağaza Bilgileri</h2>
         <p class="info__text">Bir ürün hakkında soru sormak veya mağazayı ziyaret etmek için.</p>
-        <a class="btn btn--secondary" href="/iletisim/">İletişim sayfası</a>
+        <a class="btn btn--secondary" href={url('/iletisim/')}>İletişim sayfası</a>
       </div>
       <ContactInfo />
     </div>

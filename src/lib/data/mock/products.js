@@ -13,8 +13,11 @@
  * kaynağı `credit` alanında kayıtlıdır. Bilgiler 24 Ekim 2026'da kontrol edildi.
  */
 
+import { url } from '../../paths.js';
+
 const CHECKED = '2026-10-24';
-const IMG = '/urun-gorselleri/';
+// Yerel görseller public/ altında; yayın alt yoluna (base) göre adreslenir.
+const IMG = url('/urun-gorselleri/');
 
 const LICENSES = {
   cc0: { name: 'CC0 1.0', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },

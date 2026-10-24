@@ -1,4 +1,5 @@
 ---
+import { url } from '../lib/paths.js';
 import Brand from './Brand.astro';
 import ContactInfo from './ContactInfo.astro';
 import { categories, categoryUrl } from '../config/categories.js';
@@ -19,7 +20,7 @@ const infoLinks = mainNav.filter((n) => !['home', 'shop'].includes(n.key));
     <nav aria-labelledby="footer-shop">
       <h2 id="footer-shop">Mağaza</h2>
       <ul>
-        <li><a href="/magaza/">Tüm ürünler</a></li>
+        <li><a href={url('/magaza/')}>Tüm ürünler</a></li>
         {
           categories.map((c) => (
             <li>
@@ -40,8 +41,8 @@ const infoLinks = mainNav.filter((n) => !['home', 'shop'].includes(n.key));
             </li>
           ))
         }
-        <li><a href="/sepet/">Sepet</a></li>
-        <li><a href="/kaynaklar/">Ürün ve görsel kaynakları</a></li>
+        <li><a href={url('/sepet/')}>Sepet</a></li>
+        <li><a href={url('/kaynaklar/')}>Ürün ve görsel kaynakları</a></li>
       </ul>
     </nav>
 

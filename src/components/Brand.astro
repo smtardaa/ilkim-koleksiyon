@@ -5,8 +5,9 @@
  * lisans alınana kadar OFL lisanslı Federo geçici olarak kullanılır.
  */
 import { store } from '../config/store.js';
+import { url } from '../lib/paths.js';
 
-const { as = 'a', href = '/', size = 'md', class: className } = Astro.props;
+const { as = 'a', href = url('/'), size = 'md', class: className } = Astro.props;
 const Tag = as;
 ---
 

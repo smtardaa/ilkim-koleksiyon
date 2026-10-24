@@ -6,7 +6,8 @@
  * yazılacak (cartCreate, cartLinesAdd, cartLinesUpdate, cartLinesRemove;
  * ödeme için Shopify'ın döndürdüğü checkoutUrl).
  */
-const KEY = 'ilkim-koleksiyon:demo-cart:v1';
+// v2: ürün ve görsel adresleri yayın alt yolunu (base) içerir.
+const KEY = 'ilkim-koleksiyon:demo-cart:v2';
 
 function read() {
   try {

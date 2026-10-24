@@ -21,13 +21,15 @@ npm install
 npm run dev
 ```
 
-Önizleme adresi: **http://localhost:5500**
+Yerel adres: **http://localhost:5500** (otomatik olarak `http://localhost:5500/ilkim-koleksiyon/` adresine yönlenir)
+
+Site, GitHub Pages ile aynı alt yolda (`/ilkim-koleksiyon/`) çalışır; böylece yerelde gördüğünüz bağlantılar yayındakiyle birebir aynıdır.
 
 | Komut | Ne yapar |
 | --- | --- |
-| `npm run dev` | 5500 portunu kontrol eder, ardından geliştirme sunucusunu http://localhost:5500 adresinde başlatır |
+| `npm run dev` | 5500 portunu kontrol eder, ardından geliştirme sunucusunu başlatır |
 | `npm run build` | Statik siteyi `dist/` klasörüne üretir |
-| `npm run preview` | Build çıktısını http://localhost:5500 adresinde sunar (önce `npm run build`) |
+| `npm run preview` | Build çıktısını sunar; adres **http://localhost:5500/ilkim-koleksiyon/** (önizleme sunucusu kök adresi yönlendirmez) |
 
 ### 5500 portu doluysa
 
@@ -41,13 +43,23 @@ nedeni ve çözümü yazarak durur. Hiçbir işlem otomatik kapatılmaz.
 Live Server ile `dist` klasörünü açmak gerekmez; site Astro sunucusuyla çalışır. Alt sayfalara adres yazarak girmek ve
 sayfayı yenilemek sorunsuzdur.
 
+## GitHub Pages yayını
+
+- Adres: **https://smtardaa.github.io/ilkim-koleksiyon/**
+- `.github/workflows/deploy.yml`, `main` dalına her push'ta `withastro/action@v6` ile `npm ci` + `npm run build` çalıştırır ve `dist/` klasörünü `actions/deploy-pages@v5` ile yayınlar. Elle tetiklemek için Actions sekmesinde "Run workflow" da kullanılabilir.
+- **GitHub ayarı (bir kez):** Settings → Pages → Build and deployment → Source: **GitHub Actions**. "Deploy from a branch" seçili kalırsa GitHub kendi Jekyll derlemesini çalıştırır ve `.astro` dosyalarındaki `---` bölümlerinde hata verir.
+- `astro.config.mjs`: `site: 'https://smtardaa.github.io'`, `base: '/ilkim-koleksiyon'`. Site içi yollar `src/lib/paths.js` içindeki `url()` ile üretilir; yeni bir bağlantı eklerken `href={url('/sayfa/')}` kullanın.
+- `public/.nojekyll`: Çıktının Jekyll tarafından işlenmesini kesin olarak engeller.
+- Proje tamamen statiktir (Express, API veya SSR yok); GitHub Pages için ayrı bir sunucu gerekmez.
+
 ## Ortam değişkenleri
 
 Değişkenlerin açıklamaları `.env.example` içinde.
 
 | Değişken | Demo değeri | Ne işe yarar |
 | --- | --- | --- |
-| `SITE_URL` | boş | Gerçek alan adı. Tanımlıysa canonical, og:url, mutlak JSON-LD URL'leri ve sitemap üretilir. |
+| `SITE_URL` | boş → `https://smtardaa.github.io` | Yayın alan adı (canonical, og:url, JSON-LD, sitemap). Özel alan adına geçilirse değiştirilir. |
+| `BASE_PATH` | boş → `/ilkim-koleksiyon` | Yayın alt yolu. Özel alan adında `/` yapılır. |
 | `PUBLIC_ALLOW_INDEXING` | `false` | `true` yapılmadıkça tüm sayfalar `noindex, nofollow` olur. |
 | `DATA_SOURCE` | `mock` | Ürün verisinin kaynağı. `shopify` seçeneği henüz uygulanmadı ve bilerek hata verir. |
 

@@ -1,3 +1,5 @@
+import { url } from '../lib/paths.js';
+
 /**
  * Ana kategoriler. Shopify'da her biri aynı handle ile bir koleksiyona
  * karşılık gelecek şekilde tasarlandı.
@@ -50,5 +52,5 @@ export function getCategory(slug) {
 }
 
 export function categoryUrl(slug) {
-  return `/magaza/${slug}/`;
+  return url(`/magaza/${slug}/`);
 }

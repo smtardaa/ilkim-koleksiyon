@@ -2,6 +2,7 @@
  * Ürün sayfası: sepete ekleme ve teklif formu (demo).
  */
 import { cart } from './cart/store.js';
+import { url } from '../lib/paths.js';
 
 export function initProductPage(root) {
   const item = JSON.parse(root.dataset.cartItem);
@@ -16,7 +17,7 @@ export function initProductPage(root) {
       return;
     }
     await cart.add(item, 1);
-    status.innerHTML = 'Sepete eklendi. <a href="/sepet/">Sepete git</a>';
+    status.innerHTML = `Sepete eklendi. <a href="${url('/sepet/')}">Sepete git</a>`;
   });
 
   // Teklif formu: hiçbir veri gönderilmez veya saklanmaz.

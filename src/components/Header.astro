@@ -1,4 +1,5 @@
 ---
+import { url } from '../lib/paths.js';
 import Brand from './Brand.astro';
 import Icon from './Icon.astro';
 import { store } from '../config/store.js';
@@ -60,7 +61,7 @@ const { current } = Astro.props;
         <span class="visually-hidden">Ürün ara</span>
         <Icon name="search" />
       </button>
-      <a class="icon-btn" href="/sepet/" data-cart-link aria-current={current === 'cart' ? 'page' : undefined}>
+      <a class="icon-btn" href={url('/sepet/')} data-cart-link aria-current={current === 'cart' ? 'page' : undefined}>
         <span class="visually-hidden" data-cart-label>Sepet</span>
         <Icon name="cart" />
         <span class="cart-count" data-cart-count hidden aria-hidden="true"></span>
@@ -69,7 +70,7 @@ const { current } = Astro.props;
   </div>
 
   <div id="header-search" class="header-search" hidden data-search-panel>
-    <form class="container header-search__form" action="/magaza/" method="get" role="search">
+    <form class="container header-search__form" action={url('/magaza/')} method="get" role="search">
       <label class="visually-hidden" for="header-search-q">Ürün ara</label>
       <input
         class="input"
