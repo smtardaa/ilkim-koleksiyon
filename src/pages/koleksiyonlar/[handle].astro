@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CatalogView from '../../components/CatalogView.astro';
+import ProviderError from '../../components/ProviderError.astro';
+import { loadCatalog, search, collectionUrl } from '../../lib/catalog.js';
+import { parseState, hasFilters } from '../../lib/search/engine.js';
+import { breadcrumbLd, itemListLd } from '../../lib/seo.js';
+import { site } from '../../config/site.js';
+import { truncate } from '../../lib/format.js';
+
+const handle = Astro.params.handle ?? '';
+const state = parseState(Astro.url.searchParams);
+let catalog: any = null, error: any = null, result: any = null, coll: any = null;
+try {
+  catalog = await loadCatalog();
+  coll = catalog.collMap.get(handle) ?? null;
+  if (coll) result = search(catalog, state, { pageSize: site.pageSize, baseCollection: handle });
+} catch (e) { error = e; Astro.response.status = 503; }
+if (!error && !coll) return new Response(null, { status: 404, statusText: 'Not Found' });
+const crumbs = coll ? [{ title: 'Ana sayfa', href: '/' }, { title: 'Koleksiyon seçkileri', href: '/koleksiyonlar' }, { title: coll.title, href: collectionUrl(handle) }] : [];
+const filtered = hasFilters(state) || !!state.q || state.sort !== 'onerilen';
+const base = collectionUrl(handle);
+---
+<BaseLayout
+  title={coll ? coll.title + (state.page > 1 ? ` — Sayfa ${state.page}` : '') : 'Seçki'}
+  description={coll ? truncate(`${coll.description ?? coll.title} ${coll.productCount} ürün.`, 158) : ''}
+  canonical={filtered ? base : state.page > 1 ? `${base}?sayfa=${state.page}` : base}
+  noindex={filtered || (coll && coll.productCount === 0)}
+  jsonLd={coll ? [breadcrumbLd(crumbs), itemListLd(result.items, coll.title)] : undefined}
+>
+  {error ? <ProviderError error={error} /> : (
+    <>
+      <div class="container page-head">
+        <Breadcrumbs items={crumbs} />
+        <h1>{coll.title}</h1>
+        {coll.description && <p class="lead muted">{coll.description}</p>}
+      </div>
+      <div class="container"><CatalogView basePath={base} state={state} result={result} /></div>
+    </>
+  )}
+</BaseLayout>

@@ -1,0 +1,189 @@
+---
+/**
+ * Katalog görünümü: filtre paneli + araç çubuğu + ürün ızgarası + sayfalama.
+ * Bütün durum URL'de tutulur (GET formu); JavaScript yalnızca kolaylık sağlar.
+ * Filtreler sunucuda bütün katalog üzerinde uygulanır.
+ */
+import ProductCard from './ProductCard.astro';
+import Icon from './Icon.astro';
+import { SORTS, FACETS, stateToParams, hasFilters } from '../lib/search/engine.js';
+import { formatNumber } from '../lib/format.js';
+
+interface Props {
+  basePath: string;           // ör. /urunler, /kategori/tc-kagit-paralar
+  state: any;                 // parseState çıktısı
+  result: any;                // runQuery çıktısı
+  omitCategoryParam?: boolean;
+  showSearchBox?: boolean;
+  emptyTitle?: string;
+  emptyText?: string;
+  subcategories?: { title: string; href: string; count: number }[];
+}
+const { basePath, state, result, omitCategoryParam = false, showSearchBox = true, emptyTitle, emptyText, subcategories = [] } = Astro.props;
+
+const href = (overrides: any) => {
+  const p = stateToParams(state, { ...overrides, __omitCategory: omitCategoryParam });
+  const qs = p.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+};
+const facetLabel = (key: string, value: string) => {
+  const f = result.facets.find((x: any) => x.key === key);
+  return f?.options.find((o: any) => o.value === value)?.label ?? value;
+};
+const facetTitle = (key: string) => FACETS.find((f) => f.key === key)?.label ?? key;
+
+// Aktif filtre etiketleri (her biri tek tıkla kaldırılabilir)
+const chips: { label: string; href: string }[] = [];
+if (state.q) chips.push({ label: `“${state.q}”`, href: href({ q: '', page: 1 }) });
+for (const [k, vals] of Object.entries(state.facets) as [string, string[]][]) {
+  for (const v of vals) chips.push({ label: `${facetTitle(k)}: ${facetLabel(k, v)}`, href: href({ page: 1, facets: { [k]: vals.filter((x) => x !== v) } }) });
+}
+if (state.yearMin != null || state.yearMax != null) chips.push({ label: `Yıl${state.calendar === 'hicri' ? ' (Hicrî)' : ''}: ${state.yearMin ?? '…'}–${state.yearMax ?? '…'}`, href: href({ yearMin: null, yearMax: null, page: 1 }) });
+if (state.priceMin != null || state.priceMax != null) chips.push({ label: `Fiyat: ${state.priceMin ?? 0}–${state.priceMax ?? '…'} ₺`, href: href({ priceMin: null, priceMax: null, page: 1 }) });
+if (state.catalogNo) chips.push({ label: `Katalog no: ${state.catalogNo}`, href: href({ catalogNo: '', page: 1 }) });
+const clearHref = state.q && showSearchBox ? `${basePath}?q=${encodeURIComponent(state.q)}` : basePath;
+
+// Sayfa numaraları (kısaltılmış)
+const pages: (number | 'gap')[] = [];
+const { page, pageCount } = result;
+for (let i = 1; i <= pageCount; i++) {
+  if (i === 1 || i === pageCount || Math.abs(i - page) <= 1) pages.push(i);
+  else if (pages[pages.length - 1] !== 'gap') pages.push('gap');
+}
+const from = result.total === 0 ? 0 : (page - 1) * result.pageSize + 1;
+const to = Math.min(result.total, page * result.pageSize);
+const preservedHidden = [] as { name: string; value: string }[];
+if (state.q) preservedHidden.push({ name: 'q', value: state.q });
+if (state.category && !omitCategoryParam) preservedHidden.push({ name: 'kategori', value: state.category });
+---
+<div class="catalog">
+  <aside class="filters" id="filters" data-open="false" aria-label="Filtreler">
+    <div class="filters-head">
+      <h2>Filtrele</h2>
+      <button type="button" class="icon-btn" data-filters-close aria-label="Filtreleri kapat"><Icon name="close" /></button>
+    </div>
+    <form method="get" action={basePath}>
+      {preservedHidden.map((h) => <input type="hidden" name={h.name} value={h.value} />)}
+      {state.sort !== 'onerilen' && <input type="hidden" name="siralama" value={state.sort} />}
+
+      {result.facets.map((f: any) => (
+        <details class="filter-group" open={f.options.some((o: any) => o.selected) || ['tur', 'stok', 'ulke', 'emisyon'].includes(f.key)}>
+          <summary>{f.label}</summary>
+          {f.searchable && f.options.length > 8 && (
+            <input class="facet-search" type="search" placeholder={`${f.label} içinde ara`} aria-label={`${f.label} seçeneklerinde ara`} data-facet-search={`fo-${f.key}`} />
+          )}
+          <ul class="filter-options" id={`fo-${f.key}`}>
+            {f.options.map((o: any) => (
+              <li>
+                <label class:list={{ zero: o.count === 0 }}>
+                  <input type="checkbox" name={f.key} value={o.value} checked={o.selected} />
+                  <span>{o.label}</span>
+                  <span class="count">{o.count}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ))}
+
+      <details class="filter-group" open={state.yearMin != null || state.yearMax != null}>
+        <summary>Yıl aralığı</summary>
+        <div class="range">
+          <label>En erken<input type="number" name="yil_min" inputmode="numeric" min="1000" max="2100" value={state.yearMin ?? ''} placeholder={result.bounds.year?.[0] ?? ''} /></label>
+          <label>En geç<input type="number" name="yil_max" inputmode="numeric" min="1000" max="2100" value={state.yearMax ?? ''} placeholder={result.bounds.year?.[1] ?? ''} /></label>
+        </div>
+        <label class="small" style="display:grid;gap:4px;margin-bottom:10px">Takvim
+          <select class="select" name="takvim">
+            <option value="" selected={state.calendar !== 'hicri'}>Miladî</option>
+            <option value="hicri" selected={state.calendar === 'hicri'}>Hicrî (Osmanlı sikkelerinde cülus yılı)</option>
+          </select>
+        </label>
+        <p class="small muted" style="margin:0 0 10px">Miladî ve hicrî tarihler ayrı tutulur; yalnızca seçilen takvimdeki yıllar karşılaştırılır.</p>
+      </details>
+
+      <details class="filter-group" open={state.priceMin != null || state.priceMax != null}>
+        <summary>Fiyat aralığı (₺)</summary>
+        <div class="range">
+          <label>En az<input type="number" name="fiyat_min" inputmode="numeric" min="0" step="1" value={state.priceMin ?? ''} placeholder={result.bounds.price ? String(Math.floor(result.bounds.price[0])) : ''} /></label>
+          <label>En çok<input type="number" name="fiyat_max" inputmode="numeric" min="0" step="1" value={state.priceMax ?? ''} placeholder={result.bounds.price ? String(Math.ceil(result.bounds.price[1])) : ''} /></label>
+        </div>
+      </details>
+
+      <details class="filter-group" open={!!state.catalogNo}>
+        <summary>Katalog numarası</summary>
+        <label style="display:grid;gap:4px;margin-bottom:10px" class="small">Pick / KM numarası
+          <input class="field" type="text" name="katalog" value={state.catalogNo} placeholder="ör. P-173a" />
+        </label>
+      </details>
+
+      <div class="actions">
+        <button class="btn btn--lime btn--sm" type="submit">Uygula</button>
+        <a class="btn btn--outline btn--sm" href={clearHref}>Temizle</a>
+      </div>
+    </form>
+  </aside>
+
+  <div>
+    {subcategories.length > 0 && (
+      <ul class="subcats" aria-label="Alt kategoriler">
+        {subcategories.map((s) => <li><a href={s.href}>{s.title} <span class="count">{s.count}</span></a></li>)}
+      </ul>
+    )}
+
+    <div class="toolbar">
+      <p class="result-count" role="status">
+        {result.total > 0
+          ? <>{formatNumber(result.total)} ürün <span class="muted small">({from}–{to} gösteriliyor)</span></>
+          : 'Sonuç bulunamadı'}
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="btn btn--outline btn--sm filter-toggle" data-filters-open aria-controls="filters" aria-expanded="false">
+          <Icon name="filter" /> Filtreler{chips.length > 0 && ` (${chips.length})`}
+        </button>
+        <form method="get" action={basePath}>
+          {[...stateToParams(state, { sort: 'onerilen', page: 1, __omitCategory: omitCategoryParam }).entries()].map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+          <label class="visually-hidden" for="sort-select">Sıralama</label>
+          <select id="sort-select" class="select" name="siralama" data-autosubmit>
+            {SORTS.map((s) => <option value={s.value} selected={state.sort === s.value}>{s.label}</option>)}
+          </select>
+          <noscript><button class="btn btn--sm btn--outline" type="submit">Sırala</button></noscript>
+        </form>
+      </div>
+    </div>
+
+    {chips.length > 0 && (
+      <ul class="active-filters" aria-label="Uygulanan filtreler">
+        {chips.map((c) => <li><a href={c.href} aria-label={`Filtreyi kaldır: ${c.label}`}>{c.label} <span aria-hidden="true">×</span></a></li>)}
+        {(chips.length > 1 || hasFilters(state)) && <li><a class="clear" href={clearHref}>Tüm filtreleri temizle</a></li>}
+      </ul>
+    )}
+
+    {result.total > 0 ? (
+      <>
+        <div class="product-grid">
+          {result.items.map((p: any, i: number) => <ProductCard product={p} eager={i < 4} headingLevel="h2" />)}
+        </div>
+        {pageCount > 1 && (
+          <nav aria-label="Sayfalar">
+            <ul class="pagination">
+              {page > 1 && <li><a href={href({ page: page - 1 })} rel="prev" aria-label="Önceki sayfa"><Icon name="chevron-left" /></a></li>}
+              {pages.map((n) => n === 'gap'
+                ? <li><span class="gap" aria-hidden="true">…</span></li>
+                : <li>{n === page ? <span aria-current="page">{n}</span> : <a href={href({ page: n })} aria-label={`Sayfa ${n}`}>{n}</a>}</li>)}
+              {page < pageCount && <li><a href={href({ page: page + 1 })} rel="next" aria-label="Sonraki sayfa"><Icon name="chevron-right" /></a></li>}
+            </ul>
+          </nav>
+        )}
+      </>
+    ) : (
+      <div class="empty-state">
+        <h2>{emptyTitle ?? 'Bu ölçütlere uyan ürün bulunamadı'}</h2>
+        <p class="muted">{emptyText ?? 'Bazı filtreleri kaldırmayı veya farklı bir ifadeyle aramayı deneyin.'}</p>
+        <div class="actions">
+          {chips.length > 0 && <a class="btn btn--lime" href={clearHref}>Filtreleri temizle</a>}
+          <a class="btn btn--outline" href="/urunler">Bütün ürünlere göz at</a>
+        </div>
+      </div>
+    )}
+  </div>
+</div>

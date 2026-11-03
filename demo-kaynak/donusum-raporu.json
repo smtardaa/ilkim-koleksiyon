@@ -1,0 +1,156 @@
+{
+ "generatedAt": "2026-11-03T20:31:24.865Z",
+ "source": "https://eskiparamarket.com/",
+ "sitemapProductUrls": 988,
+ "productsImported": 988,
+ "productsFailed": 0,
+ "productsWithoutImages": [],
+ "imagesImported": 2393,
+ "categories": 288,
+ "emptyCategories": [
+  "antika-ve-diger/antika",
+  "madalya-ve-objeler",
+  "osmanli-paralari/osmanli-kagit-paralari/ii-abdulhamid",
+  "osmanli-paralari/osmanli-madeni-paralari/abdulaziz",
+  "osmanli-paralari/osmanli-madeni-paralari/iv-murat",
+  "osmanli-paralari/osmanli-madeni-paralari/vi-mehmed-vahdeddin",
+  "pul-ve-koleksiyon-malzemeleri/koleksiyon-malzemeleri/diger",
+  "pul-ve-koleksiyon-malzemeleri/koleksiyon-malzemeleri/foyler",
+  "pul-ve-koleksiyon-malzemeleri/koleksiyon-malzemeleri/kapama-ve-kapsuller",
+  "pul-ve-koleksiyon-malzemeleri/koleksiyon-malzemeleri/katalog",
+  "pul-ve-koleksiyon-malzemeleri/pul",
+  "tc-kagit-paralar/6-emisyon/1-000-lira",
+  "tc-kagit-paralar/6-emisyon/100-lira",
+  "tc-kagit-paralar/6-emisyon/5-lira",
+  "tc-kagit-paralar/7-emisyon/10-000-lira",
+  "tc-kagit-paralar/7-emisyon/100-lira",
+  "tc-kagit-paralar/7-emisyon/20-000-lira",
+  "tc-kagit-paralar/7-emisyon/5-000-lira",
+  "tc-kagit-paralar/7-emisyon/50-000-lira",
+  "tc-kagit-paralar/7-emisyon/500-000-lira",
+  "tc-kagit-paralar/7-emisyon/500-lira",
+  "tc-kagit-paralar/8-emisyon/100-ytl",
+  "tc-kagit-paralar/8-emisyon/20-ytl",
+  "tc-kagit-paralar/9-emisyon",
+  "tc-madeni-paralar/2004-ve-sonrasi-donem",
+  "yabanci-paralar/bahreyn",
+  "yabanci-paralar/benin",
+  "yabanci-paralar/bermuda-birlesik-krallik",
+  "yabanci-paralar/bhutan",
+  "yabanci-paralar/birlesik-krallik-ingiltere",
+  "yabanci-paralar/cook-adalari",
+  "yabanci-paralar/dogu-timor",
+  "yabanci-paralar/ermenistan",
+  "yabanci-paralar/falkland-adalari-birlesik-krallik",
+  "yabanci-paralar/faroe-adalari-danimarka",
+  "yabanci-paralar/filistin",
+  "yabanci-paralar/guernsey-birlesik-krallik",
+  "yabanci-paralar/guney-kore",
+  "yabanci-paralar/isvicre",
+  "yabanci-paralar/jersey-birlesik-krallik",
+  "yabanci-paralar/karadag",
+  "yabanci-paralar/kiribati",
+  "yabanci-paralar/kosova",
+  "yabanci-paralar/kuzey-kibris",
+  "yabanci-paralar/kuzey-makedonya",
+  "yabanci-paralar/kuzey-mariana-adalari-abd",
+  "yabanci-paralar/lihtenstayn",
+  "yabanci-paralar/macaristan",
+  "yabanci-paralar/mali",
+  "yabanci-paralar/man-adasi-birlesik-krallik",
+  "yabanci-paralar/new-hebrides-yeni-hebrides",
+  "yabanci-paralar/nijer",
+  "yabanci-paralar/orta-afrika-cumhuriyeti",
+  "yabanci-paralar/san-marino",
+  "yabanci-paralar/sint-maarten-hollanda",
+  "yabanci-paralar/tonga",
+  "yabanci-paralar/trinidad-ve-tobago",
+  "yabanci-paralar/vanuatu",
+  "yabanci-paralar/vatikan",
+  "yabanci-paralar/yemen",
+  "yabanci-paralar/yeni-kaledonya-fransa",
+  "yabanci-paralar/yesil-burun-adalari"
+ ],
+ "collections": [
+  {
+   "handle": "sertifikali-paralar",
+   "count": 9
+  },
+  {
+   "handle": "gumus-paralar",
+   "count": 14
+  },
+  {
+   "handle": "para-setleri",
+   "count": 4
+  },
+  {
+   "handle": "polimer-banknotlar",
+   "count": 6
+  }
+ ],
+ "kinds": {
+  "banknot": 961,
+  "madeni": 17,
+  "set": 4,
+  "bilinmiyor": 3,
+  "malzeme": 3
+ },
+ "specCoverage": {
+  "country": 982,
+  "yearFrom": 957,
+  "denomination": 975,
+  "emission": 61,
+  "ruler": 5,
+  "period": 8,
+  "condition": 967,
+  "catalogNumber": 930,
+  "certification": 3,
+  "metal": 16
+ },
+ "demoScenarios": [
+  {
+   "title": "8. Emisyon 5 Yeni Türk Lirası Pick P-217 Yıl 2005 Kondisyon 10/10",
+   "scenario": "sold",
+   "source": "https://eskiparamarket.com/8-emisyon-5-yeni-turk-lirasi-pik-p-217-yil-2005-kondisyon-10-10-2"
+  },
+  {
+   "title": "5. Emisyon 5 Lira 3. Tertip Pick 173a Yıl 1961 Kondisyon 10/7",
+   "scenario": "sold",
+   "source": "https://eskiparamarket.com/5-emisyon-5-lira-3-tertip-pik-173a-yil-1961-kondisyon-10-7"
+  },
+  {
+   "title": "Japonya 1.000 Yen 2004, P#104/B Kondisyon 10/10",
+   "scenario": "out_of_stock",
+   "source": "https://eskiparamarket.com/japonya-1-000-yen-2004-pkare104-b-kondisyon-10-10"
+  }
+ ],
+ "categoryCorrections": [
+  {
+   "sourceId": "7",
+   "title": "İSMET İNÖNÜ 1940 GÜMÜŞ 1 LİRA KONDİSYON 10/8",
+   "reason": "Para ürünü koleksiyon malzemeleri kategorisinden çıkarıldı"
+  },
+  {
+   "sourceId": "93",
+   "title": "BOZKURT FANTAZİ PARA  KONDİSYON 10/10",
+   "reason": "Fantazi para T.C. hatıra kategorisinden çıkarıldı"
+  },
+  {
+   "sourceId": "236",
+   "title": "II.Abdülhamit 5 kuruş, 1293/33   GÜMÜŞ KONDİSYON ÇİL-",
+   "reason": "Osmanlı sikkesi (hicrî tarih + hükümdar adı) T.C. kategorilerinden çıkarıldı"
+  },
+  {
+   "sourceId": "237",
+   "title": "V. Mehmed Reşad 5 KURUŞ 1327/1 GÜMÜŞ KONDİSYON ÇİL ALTI",
+   "reason": "Osmanlı sikkesi (hicrî tarih + hükümdar adı) T.C. kategorilerinden çıkarıldı"
+  },
+  {
+   "sourceId": "238",
+   "title": "Abdülmecid, 5 KURUŞ 1255/21 \"R\" (GÜMÜŞ)KONDİSYON ÇT- TEK NADİR",
+   "reason": "Osmanlı sikkesi (hicrî tarih + hükümdar adı) T.C. kategorilerinden çıkarıldı"
+  }
+ ],
+ "failures": []
+}

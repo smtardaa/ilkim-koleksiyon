@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CatalogView from '../components/CatalogView.astro';
+import ProviderError from '../components/ProviderError.astro';
+import { loadCatalog, search } from '../lib/catalog.js';
+import { parseState, hasFilters } from '../lib/search/engine.js';
+import { breadcrumbLd, itemListLd } from '../lib/seo.js';
+import { site, isDemo } from '../config/site.js';
+
+const state = parseState(Astro.url.searchParams);
+if (!Astro.url.searchParams.has('siralama')) state.sort = 'yeni';
+let error: any = null, result: any = null;
+try {
+  const catalog = await loadCatalog();
+  // Yeni gelenler: en yeni 96 ürün içinde gezinilir (stokta olanlar)
+  const recent = [...catalog.products].filter((p) => p.availability.status === 'in_stock')
+    .sort((a, b) => (Date.parse(b.createdAt ?? '') || b.order) - (Date.parse(a.createdAt ?? '') || a.order)).slice(0, 96);
+  result = search({ ...catalog, products: recent }, state, { pageSize: site.pageSize });
+} catch (e) { error = e; Astro.response.status = 503; }
+const crumbs = [{ title: 'Ana sayfa', href: '/' }, { title: 'Yeni gelenler', href: '/yeni-gelenler' }];
+const filtered = hasFilters(state) || state.sort !== 'yeni' || !!state.q;
+---
+<BaseLayout title="Yeni gelenler" description="İlkim Koleksiyon kataloğuna en son eklenen kâğıt paralar, madeni paralar ve koleksiyon parçaları." canonical={state.page > 1 && !filtered ? `/yeni-gelenler?sayfa=${state.page}` : '/yeni-gelenler'} noindex={filtered} jsonLd={result ? [breadcrumbLd(crumbs), itemListLd(result.items, 'Yeni gelenler')] : undefined}>
+  {error ? <ProviderError error={error} /> : (
+    <>
+      <div class="container page-head">
+        <Breadcrumbs items={crumbs} />
+        <h1>Yeni gelenler</h1>
+        <p class="lead muted">Kataloğa en son eklenen 96 ürün.{isDemo && ' Demo envanterde ekleme sırası, kaynak kayıt numarasına göre belirlenir (kaynakta ekleme tarihi yayınlanmıyor).'}</p>
+      </div>
+      <div class="container"><CatalogView basePath="/yeni-gelenler" state={state} result={result} /></div>
+    </>
+  )}
+</BaseLayout>

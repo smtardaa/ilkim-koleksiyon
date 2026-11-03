@@ -1,0 +1,27 @@
+---
+/**
+ * Veri sağlayıcısına ulaşılamadığında gösterilir (ör. Shopify bağlantı hatası).
+ * Demo veriye sessizce geçilmez. Sayfa 503 durum koduyla döner.
+ */
+import { storeMode } from '../config/site.js';
+interface Props { error: any }
+const { error } = Astro.props;
+console.error('[katalog] Sağlayıcı hatası:', error?.kind ?? '', error?.message ?? error, error?.details ?? '');
+const isConfig = error?.kind === 'config';
+---
+<section class="container section">
+  <div class="empty-state" role="alert">
+    <h1 style="font-size:1.6rem">Mağaza verisine şu anda ulaşılamıyor</h1>
+    <p class="muted">Ürün bilgileri {storeMode === 'shopify' ? 'Shopify mağazasından' : 'veri kaynağından'} alınamadı. Lütfen birkaç dakika sonra tekrar deneyin.</p>
+    {import.meta.env.DEV && (
+      <p class="notice notice--error" style="text-align:left;max-width:640px;margin:16px auto 0">
+        <strong>Geliştirici notu:</strong> {isConfig ? 'Yapılandırma eksik — ' : ''}{error?.message ?? String(error)}
+        {error?.details && <><br /><small>{String(error.details).slice(0, 300)}</small></>}
+      </p>
+    )}
+    <div class="actions">
+      <a class="btn btn--outline" href="/">Ana sayfa</a>
+      <a class="btn btn--outline" href="/iletisim">İletişim</a>
+    </div>
+  </div>
+</section>

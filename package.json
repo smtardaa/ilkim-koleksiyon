@@ -1,0 +1,27 @@
+{
+  "name": "ilkim-koleksiyon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "İlkim Koleksiyon — Astro tabanlı, Shopify Storefront API'ye hazır numizmatik e-ticaret demosu",
+  "scripts": {
+    "dev": "astro dev --port 5500 --host 127.0.0.1",
+    "build": "astro build",
+    "preview": "astro preview --port 5500 --host 127.0.0.1",
+    "start": "node ./dist/server/entry.mjs",
+    "check": "astro check",
+    "test": "node --test tests/*.test.mjs",
+    "demo:images": "node scripts/build-demo-images.mjs",
+    "demo:data": "node scripts/build-demo-data.mjs",
+    "brand:assets": "node scripts/build-brand-assets.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.9",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "astro": "^7.4.5",
+    "sharp": "^0.35.5"
+  }
+}

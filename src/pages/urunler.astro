@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CatalogView from '../components/CatalogView.astro';
+import ProviderError from '../components/ProviderError.astro';
+import { loadCatalog, search } from '../lib/catalog.js';
+import { parseState, hasFilters } from '../lib/search/engine.js';
+import { breadcrumbLd, itemListLd } from '../lib/seo.js';
+import { site } from '../config/site.js';
+
+const state = parseState(Astro.url.searchParams);
+let catalog: any = null, error: any = null, result: any = null;
+try {
+  catalog = await loadCatalog();
+  result = search(catalog, state, { pageSize: site.pageSize });
+} catch (e) { error = e; Astro.response.status = 503; }
+
+// İndeksleme stratejisi: filtre/sıralama/arama kombinasyonları noindex + temel sayfaya canonical;
+// yalnızca sayfalama (sayfa=2…) kendi adresine canonical olur.
+const filtered = hasFilters(state) || !!state.q || state.sort !== 'onerilen';
+const canonical = filtered ? '/urunler' : state.page > 1 ? `/urunler?sayfa=${state.page}` : '/urunler';
+const crumbs = [{ title: 'Ana sayfa', href: '/' }, { title: 'Tüm ürünler', href: '/urunler' }];
+const title = state.page > 1 ? `Tüm ürünler — Sayfa ${state.page}` : 'Tüm ürünler';
+---
+<BaseLayout
+  title={title}
+  description="İlkim Koleksiyon kataloğundaki bütün kâğıt paralar, madeni paralar, hatıra paraları ve koleksiyon malzemeleri; ülke, yıl, emisyon, kondisyon ve fiyata göre filtreleyin."
+  canonical={canonical}
+  noindex={filtered}
+  jsonLd={result ? [breadcrumbLd(crumbs), itemListLd(result.items, 'Tüm ürünler')] : undefined}
+>
+  {error ? <ProviderError error={error} /> : (
+    <>
+      <div class="container page-head">
+        <Breadcrumbs items={crumbs} />
+        <h1>Tüm ürünler</h1>
+        <p class="lead muted">Kataloğun tamamında filtreleyin; sonuç sayısı ve filtre sayıları bütün ürünler üzerinden hesaplanır.</p>
+      </div>
+      <div class="container">
+        <CatalogView basePath="/urunler" state={state} result={result} />
+      </div>
+    </>
+  )}
+</BaseLayout>
