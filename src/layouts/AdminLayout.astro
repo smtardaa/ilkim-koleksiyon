@@ -1,0 +1,54 @@
+---
+/** Yönetim paneli düzeni: sitenin renk, yazı ve düğme sistemiyle; arama motorlarına kapalı. */
+import '../styles/global.css';
+import '../styles/admin.css';
+import Icon from '../components/Icon.astro';
+
+interface Props { title: string; active?: 'genel' | 'eksikler' | null; missing?: number | null }
+const { title, active = null, missing = null } = Astro.props;
+const session = (Astro.locals as any).admin ?? null;
+---
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#003F35" />
+    <link rel="icon" href="/brand/favicon-32.png" type="image/png" sizes="32x32" />
+    <title>{title} · Yönetim · İlkim Koleksiyon</title>
+  </head>
+  <body class="admin">
+    <a class="skip-link" href="#icerik">İçeriğe geç</a>
+    <header class="adm-bar on-dark">
+      <div class="adm-wrap adm-bar-inner">
+        <a class="adm-brand" href="/yonetim">
+          <img src="/brand/amblem-96.png" width="40" height="40" alt="" />
+          <span><strong>İlkim Koleksiyon</strong><small>Yönetim paneli</small></span>
+        </a>
+        {session && (
+          <nav class="adm-tabs" aria-label="Panel sayfaları">
+            <a href="/yonetim" aria-current={active === 'genel' ? 'page' : undefined}>Genel yönetim</a>
+            <a href="/yonetim/eksikler" aria-current={active === 'eksikler' ? 'page' : undefined}>
+              Doldurulacaklar
+              {missing != null && missing > 0 && <span class="adm-count" aria-label={`${missing} eksik`}>{missing}</span>}
+            </a>
+          </nav>
+        )}
+        {session && (
+          <div class="adm-bar-tools">
+            <a class="adm-link" href="/" target="_blank" rel="noopener">Siteyi aç <Icon name="arrow-up-right" /></a>
+            <form method="post" action="/yonetim/cikis">
+              <input type="hidden" name="_csrf" value={session.csrf} />
+              <button class="adm-link" type="submit"><Icon name="logout" /> Çıkış</button>
+            </form>
+          </div>
+        )}
+      </div>
+    </header>
+    <main id="icerik" tabindex="-1" class="adm-main">
+      <slot />
+    </main>
+    <slot name="end" />
+  </body>
+</html>

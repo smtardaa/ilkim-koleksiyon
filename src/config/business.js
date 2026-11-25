@@ -10,6 +10,10 @@
  * - Organization yapılandırılmış verisine yalnızca dolu alanlar girer.
  *
  * Hiçbir değeri tahminle doldurmayın.
+ *
+ * Buradaki değerler VARSAYILANDIR. Yönetim panelindeki “Doldurulacaklar” sayfasında kaydedilen
+ * bilgiler çalışma anında bu nesnenin üzerine yazılır (src/lib/runtime.js); panelden girilen
+ * değer her zaman önceliklidir.
  */
 export const business = {
   /** Marka adı (logoda yazan ad). */
@@ -76,6 +80,17 @@ export const business = {
    * `null` iken form devre dışı gösterilir ve gönderim başarılı mesajı VERİLMEZ.
    */
   contactFormEndpoint: null,
+
+  /**
+   * Bilgi sayfalarının tam metinleri (/bilgi/{slug}). Dolu olan sayfa iskelet olmaktan çıkar
+   * ve metin olduğu gibi gösterilir. Yasal metinler hukuki danışmanla hazırlanmalıdır.
+   */
+  legalTexts: {
+    'kargo-ve-teslimat': null,
+    'iade-ve-cayma': null,
+    'gizlilik-ve-kvkk': null,
+    'cerez-politikasi': null,
+  },
 
   /** Hakkımızda sayfasındaki işletmeye özgü bilgiler. */
   about: {

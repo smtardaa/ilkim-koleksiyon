@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "ilkim-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5500 }
+    { "name": "ilkim-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5500 },
+    { "name": "ilkim-dev-5520", "runtimeExecutable": "npx", "runtimeArgs": ["astro", "dev", "--port", "5520", "--host", "127.0.0.1"], "port": 5520 }
   ]
 }

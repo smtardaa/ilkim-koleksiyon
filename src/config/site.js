@@ -7,11 +7,16 @@ import {
   DATA_SOURCE,
   SITE_INDEXING,
   SOLD_PRODUCTS_VISIBILITY,
+  DATA_DIR,
+  UPLOADS_DIR,
 } from 'astro:env/server';
 
 export const siteUrl = SITE_URL.replace(/\/+$/, '');
-/** Katalog veri kaynağı: 'local' (src/data/catalog). İleride 'mysql' eklenecek. */
+/** Veri kaynağı: 'local' (DATA_DIR içindeki JSON dosyaları). İleride 'mysql' eklenecek. */
 export const dataSource = DATA_SOURCE;
+/** Panel verisinin ve yüklenen görsellerin kalıcı klasörleri */
+export const dataDir = DATA_DIR;
+export const uploadsDir = UPLOADS_DIR;
 
 /**
  * İndeksleme yalnızca İKİ koşul birlikte sağlanınca açılır:

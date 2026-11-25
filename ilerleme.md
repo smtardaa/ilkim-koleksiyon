@@ -360,3 +360,55 @@ Bölümler (demo verisi): T.C. Kâğıt 10, T.C. Madeni 10, T.C. Hatıra 5, Osma
 - Gerçek telefonda parmakla kaydırma denenmedi (tarayıcı öykünmesiyle kontrol edildi).
 
 **Sonraki somut adım:** İşletme bilgilerini doldurmak; ardından `docs/YONETIM-PANELI.md` doğrultusunda panel ve MySQL sağlayıcısı.
+
+## 2026-11-26 — Adım 10: Yönetim paneli (`/yonetim`)
+
+**Durum: TAMAMLANDI (yerelde doğrulandı; canlıda giriş bilgileri tanımlanınca açılır).**
+Kullanıcı kararları: iki sayfa (1: ürün/kategori/ülke/seçki, 2: doldurulacaklar), doldurulabilir form, ürün formu
+1. sayfada açılan pencerede, tek yönetici. Veri girişi yayından sonra başlayacak; veri yeri/aktarımı sorun değil.
+
+### Yapılanlar
+- **Yazılabilir depo** `src/lib/store/`: `file-store.js` (DATA_DIR içindeki JSON, atomik yazma, sıralı yazma kuyruğu,
+  ilk açılışta `src/data/catalog` başlangıç verisini kopyalar) + `index.js` (`getStore()`; MySQL için tek ekleme noktası).
+  Site sağlayıcısı (`providers/local.js`) artık depodan okuyor; `revision` değişince türetilmiş listeler yenileniyor.
+- **Kurallar** `src/lib/admin/service.js` (depodan bağımsız): ürün doğrulama (Türkçe fiyat yazımı, benzersiz ürün kodu ve adres,
+  yabancı kategoride zorunlu ülke, `buildSpecs` ile özellikler, açıklama → kaçışlı HTML), ülke ekle/düzelt/kaldır (ad değişince
+  ürünler taşınır, kullanılan ülke silinmez), kategori düzenleme, seçki oluştur/üye ata/sil, yayından kaldır, kalıcı sil.
+- **Doldurulacaklar** `src/lib/admin/settings-schema.js`: 6 bölüm, 24 gerekli + isteğe bağlı alan, biçim denetimi (WhatsApp, telefon,
+  e-posta, https, yıl). `src/lib/runtime.js` kayıtlı bilgileri her istekte `business.js` nesnesine ve kategori düzenlemelerini
+  `topCategories`/ana sayfa bölümlerine uygular. Bilgi sayfaları (`/iletisim`, `/hakkimizda`, `/sss`, `/kaynaklar`,
+  `/koleksiyon-rehberi`, `/bilgi/*`) bu yüzden SSR'a alındı. `/bilgi/*` sayfasına tam metin girilince iskelet kalkar.
+- **Giriş** `src/lib/admin/auth.js` (ek paket yok): scrypt parola özeti, imzalı durumsuz çerez (HttpOnly/Secure/SameSite=Strict,
+  8 saat), CSRF, 5 hatalı denemede 15 dk bekleme. `npm run admin:parola` değişken satırlarını üretir.
+  Middleware `/yonetim` altını korur; `noindex, nofollow`, `no-store`, `X-Frame-Options: DENY`; robots.txt `Disallow: /yonetim`.
+- **Görseller** `src/lib/admin/images.js`: sharp ile tür doğrulama, WebP 1600/480 px, `UPLOADS_DIR`, `/medya/[name]` rotası;
+  kaldırılan görsellerin dosyaları silinir.
+- **Arayüz**: `AdminLayout`, `admin.css` (site renkleri/yazısı, 17 px temel yazı, geniş alanlar), `admin.js` (ürün penceresi,
+  görsel sıralama/kaldırma/açıklama, süzgeçler, silme onayı, kaydedilmemiş değişiklik uyarısı). Yeni ikonlar: edit, check, alert, logout, image, eye.
+- Ürün sayfası ayrıntılı açıklamayı hiç göstermiyordu → “Açıklama” bölümü eklendi.
+- HTML önbelleği `public, max-age=0, must-revalidate` yapıldı (eskiden `stale-while-revalidate` panel değişikliğini bir açılış gecikmeli gösteriyordu).
+- `astro.config.mjs`: `allowedDomains` alan adının www'li ve www'siz biçimini içeriyor (yoksa Astro panel formlarını
+  “Cross-site POST” diye reddediyordu); `bodySizeLimit` 200 MB; yeni env: `DATA_DIR`, `UPLOADS_DIR`, `ADMIN_*`, `SESSION_SECRET`.
+- Belgeler: `docs/YONETIM-PANELI.md` yeniden yazıldı (kurulum, veri yeri, güvenlik, depo arayüzü, MySQL adımları, SQL taslağı);
+  README ve `.env.example` güncellendi.
+
+### Kontroller
+- `npm test` 45/45 ✔ (16 yeni: depo kalıcılığı ve eşzamanlı yazma, ürün kuralları, ülke/kategori/seçki, Doldurulacaklar, giriş güvenliği).
+- `npm run build` ✔.
+- Tarayıcı (dev): hatalı parola reddi; giriş; boş ürün formu hataları; yabancı kategoride ülke zorunluluğu; görselli ürün ekleme →
+  ürün, ülke sayfası ve ana sayfada görünüyor; açıklamada HTML kaçışı; düzenleme (fiyat/durum); yayından kaldırınca ürün 404 ve listelerden çıkıyor;
+  ülke ekle/düzelt/sil, aynı ülke ve kullanılan ülke reddi; yanlış CSRF 403; oturumsuz kayıt 401; Doldurulacaklar'da hatalı WhatsApp reddi,
+  geçerli bilgiler `/iletisim`te anında görünüyor; bilgi sayfası metni iskeleti kaldırıyor; kategori sırası ana sayfaya yansıyor;
+  375 px'te taşma yok, ürün penceresi tam ekran ✔.
+- Derlenmiş sunucu: giriş bilgisi yokken panel kapalı ve eksikleri yazıyor; www'li/www'siz alan adı + https vekil benzetiminde giriş çalışıyor,
+  yabancı köken 403, çerez `HttpOnly; Secure; SameSite=Strict` ✔. Deneme verileri temizlendi.
+
+### Notlar / bekleyenler
+- Yerel deneme hesabı `.env.local` içinde (depoya girmez); yerel deneme verisi `storage/` altında (depoya girmez).
+- Canlıya geçerken: `npm run admin:parola` → üç satır Hostinger ortam değişkenlerine; `SITE_URL` gerçek alan adı (derleme ve çalışma için);
+  `DATA_DIR`/`UPLOADS_DIR` için yeniden dağıtımda silinmeyen bir yol önerilir; klasörlerin düzenli yedeği.
+- Port 5500'de başka bir proje (ASRIN) çalıştığı için önizleme için `.claude/launch.json`'a 5520 girdisi eklendi; bu projenin
+  önceden çalışan dev sunucusu 5501'de kullanıldı.
+- Gerçek telefonda ve gerçek bir görsel dosyasıyla yükleme denenmedi (tarayıcıda üretilen PNG ile denendi).
+
+**Sonraki somut adım:** Yayına alıp panel giriş bilgilerini tanımlamak, ardından Doldurulacaklar sayfasındaki bilgileri girmek.

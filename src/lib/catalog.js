@@ -1,8 +1,7 @@
 /**
  * Katalog servisi — sayfaların tek giriş noktası.
- * Veri kaynağı DATA_SOURCE ortam değişkeniyle seçilir. Şu an yalnızca `local`
- * (src/data/catalog/*.json) vardır; yönetim paneli geldiğinde aynı yöntemleri
- * sunan bir MySQL sağlayıcısı buraya eklenir (bkz. docs/YONETIM-PANELI.md).
+ * Sağlayıcı veriyi depodan (src/lib/store → getStore) okur. Depo bugün DATA_DIR içindeki
+ * JSON dosyalarıdır; MySQL'e geçişte yalnızca depo değişir (bkz. docs/YONETIM-PANELI.md).
  */
 import { dataSource, soldVisibility } from '../config/site.js';
 import { runQuery, inCategory, sortProducts } from './search/engine.js';

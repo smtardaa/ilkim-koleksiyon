@@ -5,9 +5,8 @@ Sitede sepet, çevrim içi ödeme, teklif veya favori yoktur. Ürün sayfasında
 **“Satın almak için iletişime geç”** düğmesi, ürün adı, kodu ve bağlantısını içeren hazır bir mesajla
 işletmenin WhatsApp'ını açar.
 
-> **Durum:** Katalog şu an boştur; ürünler ileride yönetim paneliyle (MySQL) eklenecek.
-> İşletme bilgileri (WhatsApp, telefon, e-posta, adres) ve yasal metinler henüz girilmedi;
-> `src/config/business.js` içindeki boş alanlar doldurulmadan ilgili bağlantılar gösterilmez.
+> **Durum:** Katalog şu an boştur. Ürünler ve işletme bilgileri **yönetim panelinden** (`/yonetim`) girilir;
+> boş bırakılan bilgiler sitede gösterilmez. Kurulum: [docs/YONETIM-PANELI.md](docs/YONETIM-PANELI.md).
 
 ---
 
@@ -35,7 +34,8 @@ Geliştirme sunucusu: http://localhost:5500
 | `npm run build` | Üretim derlemesi → `dist/` |
 | `npm start` | Derlenmiş sunucuyu çalıştırır (`node ./dist/server/entry.mjs`; `PORT`, `HOST`) |
 | `npm run preview` | Derlemeyi 5500 portunda önizler |
-| `npm test` | Katalog verisi, arama motoru, ana sayfa bölümleri ve WhatsApp mesajı testleri |
+| `npm test` | Katalog verisi, arama motoru, ana sayfa bölümleri, WhatsApp mesajı ve yönetim paneli testleri |
+| `npm run admin:parola` | Yönetim paneli için kullanıcı adı/parola özeti ve oturum anahtarı üretir |
 | `npm run brand:assets` | Logodan amblem, favicon ve paylaşım görseli üretir |
 
 ## Mimari
@@ -44,17 +44,20 @@ Geliştirme sunucusu: http://localhost:5500
 src/
   config/          site.js (indeksleme, satılmış görünürlüğü, publicOrigin) · business.js (işletme bilgileri, WhatsApp — TEK MERKEZ)
                    navigation.js (menüler; kategoriler categories.json'dan) · home.js (ana sayfa bölümleri)
-  data/catalog/    categories.json · countries.json · collections.json · products.json  ← tek veri merkezi
+  data/catalog/    categories.json · countries.json · collections.json · products.json  ← BAŞLANGIÇ verisi (ilk açılışta DATA_DIR'e kopyalanır)
   lib/
-    catalog.js     sayfaların tek giriş noktası; DATA_SOURCE'a göre sağlayıcı seçer
-    providers/     local.js (JSON dosyaları) — ileride mysql.js aynı arayüzle eklenecek
+    catalog.js     sayfaların tek giriş noktası
+    providers/     local.js — siteye veriyi depodan sunar
+    store/         file-store.js (DATA_DIR içindeki JSON) · index.js (getStore) — ileride mysql-store.js aynı yöntemlerle
+    admin/         auth (giriş, oturum, CSRF) · service (kurallar) · settings-schema (Doldurulacaklar alanları) · images (sharp)
+    runtime.js     panelden kaydedilen ayar/kategori değişikliklerini her istekte siteye uygular
     search/        normalize.js (Türkçe/sayı/katalog no) · engine.js (arama, faset, sıralama, sayfalama)
     home-sections.js  ana sayfa kategori bölümlerinin seçim mantığı
     seo.js         JSON-LD (Organization, WebSite, Product, BreadcrumbList, ItemList)
   components/      ProductCard, ProductSlider, CountryPicker (ülke seç penceresi), CatalogView …
-  pages/           SSR katalog sayfaları, statik bilgi sayfaları, sitemap, robots, /api/health
-  scripts/         ui.js · slider.js · cat-carousel.js (mobil sonsuz kategori kaydırıcısı)
-docs/              YONETIM-PANELI.md (ileride kurulacak panel ve MySQL bağlantısı)
+  pages/           SSR katalog ve bilgi sayfaları, yonetim/ (panel), medya/ (yüklenen görseller), sitemap, robots, /api/health
+  scripts/         ui.js · slider.js · cat-carousel.js (mobil sonsuz kategori kaydırıcısı) · admin.js (panel)
+docs/              YONETIM-PANELI.md (panel kurulumu, güvenlik, MySQL'e geçiş)
 tests/             node:test birim testleri (tests/fixtures yalnızca test verisidir)
 ```
 
@@ -70,8 +73,8 @@ tests/             node:test birim testleri (tests/fixtures yalnızca test veris
 
 | Sayfa | Oluşturma |
 |---|---|
-| Ana sayfa, `/urunler`, `/kategori/...`, `/urun/...`, `/arama`, `/yeni-gelenler`, `/koleksiyonlar/...` | İstek anında sunucuda (SSR) |
-| `/hakkimizda`, `/iletisim`, `/koleksiyon-rehberi`, `/sss`, `/kaynaklar`, `/bilgi/*` | Derleme sırasında statik |
+| Bütün sayfalar (bilgi sayfaları dahil) | İstek anında sunucuda (SSR) — panelden girilen bilgi hemen görünür |
+| `/yonetim`, `/yonetim/eksikler` | SSR, yalnızca giriş yapmış yöneticiye |
 | `/sitemap*.xml`, `/robots.txt`, `/api/health` | SSR |
 
 ## Ortam değişkenleri
@@ -82,10 +85,13 @@ tests/             node:test birim testleri (tests/fixtures yalnızca test veris
 | `DATA_SOURCE` | `local` | Veri kaynağı (ileride `mysql`) |
 | `SITE_INDEXING` | `off` | `on` + gerçek https alan adı birlikte olmadan indeksleme açılmaz |
 | `SOLD_PRODUCTS_VISIBILITY` | `visible` | `visible` / `unlisted` / `hidden` |
+| `DATA_DIR` | `./storage/veri` | Panel verisinin kalıcı klasörü |
+| `UPLOADS_DIR` | `./storage/gorseller` | Yüklenen ürün görselleri |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` | — | Panel girişi (gizli); `npm run admin:parola` |
 
 Değişkenler `astro:env` şemasıyla (`astro.config.mjs`) doğrulanır ve sunucuda **çalışma anında** okunur.
-Derlenmiş sunucu `.env` okumaz; canlıda değerler hosting panelinden verilir. Statik bilgi sayfaları derleme
-anındaki değerlerle üretilir; `business.js` değişince yeniden derleme gerekir.
+Derlenmiş sunucu `.env` okumaz; canlıda değerler hosting panelinden verilir. `SITE_URL` derleme sırasında da
+tanımlı olmalıdır (panel formlarının köken denetimi için; bkz. docs/YONETIM-PANELI.md → Güvenlik).
 
 **WhatsApp bağlantısındaki ürün adresi:** `SITE_URL` gerçek bir https alan adıysa o kullanılır; değilse isteğin
 kendi adresi kullanılır. Böylece canlıda müşteriye `localhost` bağlantısı gitmez.
@@ -107,9 +113,12 @@ kendi adresi kullanılır. Böylece canlıda müşteriye `localhost` bağlantıs
   Boş kategori ve iskelet halindeki yasal sayfalar `noindex` kalır.
 - Eski kategori adresleri yalnızca gerçek karşılığı varsa 301 ile yönlenir (`src/middleware.js`); karşılığı olmayanlar 404 döner.
 
-## Yönetim paneli ve MySQL
+## Yönetim paneli
 
-Panel bu sürümde **yoktur**. Bağlanacağı arayüz ve gereksinimler: [docs/YONETIM-PANELI.md](docs/YONETIM-PANELI.md).
+`/yonetim` — iki sayfa: **Genel yönetim** (ürünler, kategoriler, ülkeler, seçkiler) ve **Doldurulacaklar**
+(işletme bilgileri ve bilgi sayfası metinleri). Tek yönetici; giriş bilgileri ortam değişkenlerinde.
+Veri bugün `DATA_DIR` içindeki JSON dosyalarında; MySQL'e geçişte yalnızca depo katmanı değişir.
+Kurulum, güvenlik ve geçiş adımları: [docs/YONETIM-PANELI.md](docs/YONETIM-PANELI.md).
 
 ## Erişilebilirlik ve performans
 

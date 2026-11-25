@@ -1,0 +1,75 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { admin, adminConfigured, adminMissing, loginLimiter } from '../../lib/admin/config.js';
+import { verifyPassword, safeEqual, createSession, COOKIE_NAME, COOKIE_PATH } from '../../lib/admin/auth.js';
+
+export const prerender = false;
+
+// Zaten giriş yapılmışsa panele
+if ((Astro.locals as any).admin) return Astro.redirect('/yonetim', 303);
+
+const rawNext = Astro.url.searchParams.get('sonra') ?? '';
+const next = /^\/yonetim(\/[a-z-]*)?$/.test(rawNext) ? rawNext : '/yonetim';
+let error: string | null = null;
+let username = '';
+
+if (Astro.request.method === 'POST' && adminConfigured) {
+  const ip = Astro.clientAddress ?? 'bilinmiyor';
+  const wait = loginLimiter.blockedFor(ip);
+  if (wait) {
+    error = `Çok sayıda hatalı deneme yapıldı. ${wait} dakika sonra tekrar deneyin.`;
+    Astro.response.status = 429;
+  } else {
+    const form = await Astro.request.formData();
+    username = String(form.get('username') ?? '').trim();
+    const password = String(form.get('password') ?? '');
+    // İkisi de her zaman hesaplanır (hangisinin yanlış olduğu süreden anlaşılmasın)
+    const userOk = safeEqual(username.toLocaleLowerCase('tr'), (admin.username ?? '').toLocaleLowerCase('tr'));
+    const passOk = verifyPassword(password, admin.passwordHash);
+    if (userOk && passOk) {
+      loginLimiter.reset(ip);
+      const { token, maxAge } = createSession(admin.secret!, admin.username!);
+      Astro.cookies.set(COOKIE_NAME, token, {
+        httpOnly: true, sameSite: 'strict', secure: Astro.url.protocol === 'https:', path: COOKIE_PATH, maxAge,
+      });
+      return Astro.redirect(next, 303);
+    }
+    loginLimiter.fail(ip);
+    error = 'Kullanıcı adı veya parola hatalı.';
+    Astro.response.status = 401;
+  }
+}
+const loggedOut = Astro.url.searchParams.has('cikis');
+---
+<AdminLayout title="Giriş">
+  <div class="adm-login">
+    <div class="adm-card adm-login-card">
+      <h1>Panele giriş</h1>
+      {!adminConfigured ? (
+        <div class="adm-alert adm-alert--warn" role="alert">
+          <p><strong>Panel henüz kapalı.</strong> Girişin açılması için sunucuda şu ortam değişkenleri tanımlanmalı:</p>
+          <ul>{adminMissing.map((m) => <li><code>{m}</code></li>)}</ul>
+          <p>Değerleri üretmek için proje klasöründe <code>npm run admin:parola</code> komutunu çalıştırın; çıkan satırları
+            hosting panelindeki ortam değişkenlerine ekleyip uygulamayı yeniden başlatın.</p>
+        </div>
+      ) : (
+        <>
+          {loggedOut && !error && <p class="adm-alert adm-alert--ok" role="status">Çıkış yapıldı.</p>}
+          {error && <p class="adm-alert adm-alert--error" role="alert">{error}</p>}
+          <form method="post" class="adm-form">
+            <div class="adm-field">
+              <label for="username">Kullanıcı adı</label>
+              <input class="adm-input" id="username" name="username" autocomplete="username" required value={username} autofocus={!username} />
+            </div>
+            <div class="adm-field">
+              <label for="password">Parola</label>
+              <input class="adm-input" id="password" name="password" type="password" autocomplete="current-password" required autofocus={Boolean(username)} />
+            </div>
+            <button class="btn btn--lime btn--block" type="submit">Giriş yap</button>
+          </form>
+          <p class="adm-hint">Oturum 8 saat açık kalır. Ortak bir bilgisayardaysanız işiniz bitince “Çıkış”a basın.</p>
+        </>
+      )}
+    </div>
+  </div>
+</AdminLayout>

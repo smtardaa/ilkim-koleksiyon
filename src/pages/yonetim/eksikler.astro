@@ -1,0 +1,160 @@
+---
+/**
+ * PANEL 2. SAYFA — DOLDURULACAKLAR: sitede “Doldurulacak” olarak bekleyen işletme bilgileri.
+ * Alanlar src/lib/admin/settings-schema.js listesinden üretilir; kaydedilen değer sitede hemen görünür.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getStore } from '../../lib/store/index.js';
+import { readAdminForm, redirectWith } from '../../lib/admin/request.js';
+import { SETTINGS_GROUPS, applyGroupForm, getPath, displayValue, isFilled, settingsProgress } from '../../lib/admin/settings-schema.js';
+import { indexingEnabled, indexingBlockReason, siteUrl } from '../../config/site.js';
+
+export const prerender = false;
+
+const store = getStore();
+const session = (Astro.locals as any).admin;
+let failed: { group: string; errors: Record<string, string>; values: Record<string, string> } | null = null;
+let generalError: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const r = await readAdminForm(Astro);
+  if (!r.ok) { generalError = r.error; Astro.response.status = r.status; }
+  else {
+    const group = String(r.form.get('grup') ?? '');
+    const current = (await store.getSnapshot()).settings ?? {};
+    const res = applyGroupForm(group, (k) => r.form.get(k) as string | null, current);
+    if (res.ok) {
+      await store.putSettings(res.settings);
+      const title = SETTINGS_GROUPS.find((g) => g.id === group)?.title ?? 'Bilgiler';
+      return redirectWith(Astro, '/yonetim/eksikler', `${title} kaydedildi.`, group);
+    }
+    failed = { group, errors: res.errors, values: res.values };
+    Astro.response.status = 422;
+  }
+}
+
+const snap = await store.getSnapshot();
+const settings = snap.settings ?? {};
+const progress = settingsProgress(settings);
+const pct = progress.total ? Math.round((progress.done / progress.total) * 100) : 100;
+const ok = Astro.url.searchParams.get('tamam');
+
+const groups = SETTINGS_GROUPS.map((g) => {
+  const fields = g.fields.map((f) => {
+    const saved = getPath(settings, f.key);
+    const filled = isFilled(f, saved);
+    const value = failed?.group === g.id ? (failed.values[f.key] ?? '') : displayValue(f, saved);
+    const error = failed?.group === g.id ? failed.errors[f.key] ?? null : null;
+    return { ...f, filled, value, error, id: `f-${f.key.replace(/[^a-z0-9]/gi, '-')}` };
+  });
+  const req = fields.filter((f) => f.required);
+  return { ...g, fields, missing: req.filter((f) => !f.filled).length, required: req.length };
+});
+
+// Panelden doldurulamayan, sunucu ayarı gerektiren işler (yalnızca bilgi)
+const system = [
+  { done: /^https:\/\//.test(siteUrl) && !/localhost|127\.0\.0\.1/.test(siteUrl), title: 'Sitenin gerçek alan adı (SITE_URL)',
+    text: 'Hosting panelindeki ortam değişkenlerinde SITE_URL, https:// ile başlayan alan adınız olmalı. WhatsApp mesajındaki ürün bağlantısı ve paylaşım önizlemeleri bunu kullanır.' },
+  { done: indexingEnabled, title: 'Arama motorlarına açılma (SITE_INDEXING)',
+    text: indexingEnabled ? 'Site arama motorlarına açık.' : `Şu an kapalı (${indexingBlockReason}). Bilgiler tamamlanıp site hazır olduğunda SITE_INDEXING=on yapılır.` },
+  { done: snap.products.length > 0, title: 'İlk ürünlerin eklenmesi',
+    text: snap.products.length ? `${snap.products.length} ürün eklendi.` : 'Katalog boş. Ürünler “Genel yönetim” sayfasından eklenir.' },
+];
+---
+<AdminLayout title="Doldurulacaklar" active="eksikler" missing={progress.missing}>
+  <div class="adm-wrap">
+    <div class="adm-head">
+      <div>
+        <h1>Doldurulacaklar</h1>
+        <p class="adm-lead">Sitede şu an “Doldurulacak” olarak bekleyen işletme bilgileri. Bir bölümü doldurup <strong>Kaydet</strong>'e bastığınızda bilgiler sitede hemen görünür. Bilmediğiniz alanı boş bırakın; boş alanlar sitede gösterilmez.</p>
+      </div>
+    </div>
+
+    {ok && <p class="adm-alert adm-alert--ok" role="status"><Icon name="check" /> {ok}</p>}
+    {generalError && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {generalError}</p>}
+    {failed && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> Kaydedilmedi: işaretli alanları düzeltip tekrar deneyin.</p>}
+
+    <div class="adm-progress-card">
+      <div class="adm-progress-text">
+        <p class="adm-progress-num"><strong>{progress.done}</strong> / {progress.total}</p>
+        <p>{progress.missing === 0 ? 'Bütün gerekli bilgiler dolduruldu.' : `gerekli bilgi dolduruldu · ${progress.missing} eksik`}</p>
+      </div>
+      <div class="adm-progress" role="progressbar" aria-label="Doldurulan bilgiler" aria-valuemin="0" aria-valuemax="100" aria-valuenow={pct}>
+        <span style={`width:${pct}%`}></span>
+      </div>
+      <label class="adm-switch adm-only-missing"><input type="checkbox" data-only-missing /> Yalnızca eksik alanları göster</label>
+    </div>
+
+    <nav class="adm-jump" aria-label="Bölümler">
+      {groups.map((g) => (
+        <a href={`#${g.id}`}>{g.title} {g.missing > 0 ? <span class="adm-count adm-count--warn">{g.missing}</span> : (g.required > 0 && <span class="adm-count adm-count--ok" aria-label="tamam"><Icon name="check" /></span>)}</a>
+      ))}
+    </nav>
+
+    {groups.map((g) => (
+      <section class="adm-section" id={g.id} aria-labelledby={`h-${g.id}`} tabindex="-1" data-group>
+        <div class="adm-section-head">
+          <h2 id={`h-${g.id}`}>{g.title}</h2>
+          {g.required > 0 && (g.missing > 0
+            ? <span class="adm-badge adm-badge--warn">{g.missing} eksik</span>
+            : <span class="adm-badge adm-badge--in_stock"><Icon name="check" /> Tamam</span>)}
+        </div>
+        <p class="adm-lead">{g.intro}</p>
+        <form method="post" class="adm-card adm-form adm-settings" novalidate>
+          <input type="hidden" name="_csrf" value={session.csrf} />
+          <input type="hidden" name="grup" value={g.id} />
+          {g.fields.map((f) => (
+            <div class={`adm-field adm-setting${f.filled ? ' is-filled' : ''}${f.error ? ' has-error' : ''}`} data-filled={f.filled ? '1' : '0'}>
+              <div class="adm-setting-label">
+                <label for={f.id}>{f.label}</label>
+                {f.filled
+                  ? <span class="adm-state adm-state--ok"><Icon name="check" /> Dolu</span>
+                  : (f.required ? <span class="adm-state adm-state--warn">Eksik</span> : <span class="adm-state">İsteğe bağlı</span>)}
+                {f.page && <a class="adm-link-plain" href={f.page} target="_blank" rel="noopener">Sayfayı aç</a>}
+              </div>
+              {(f.type === 'textarea' || f.type === 'hours')
+                ? <textarea class="adm-input" id={f.id} name={f.key} rows={f.rows ?? 3} placeholder={f.placeholder} aria-invalid={f.error ? 'true' : undefined} aria-describedby={`${f.id}-h ${f.id}-e`}>{f.value}</textarea>
+                : <input class="adm-input" id={f.id} name={f.key} value={f.value} placeholder={f.placeholder}
+                    type={f.type === 'email' ? 'email' : f.type === 'url' ? 'url' : f.type === 'tel' ? 'tel' : 'text'}
+                    inputmode={f.type === 'tel' ? 'tel' : undefined} autocomplete="off"
+                    aria-invalid={f.error ? 'true' : undefined} aria-describedby={`${f.id}-h ${f.id}-e`} />}
+              <p class="adm-hint" id={`${f.id}-h`}>{f.hint ?? ''}</p>
+              <p class="adm-error" id={`${f.id}-e`}>{f.error ?? ''}</p>
+            </div>
+          ))}
+          <div class="adm-form-actions">
+            <button class="btn" type="submit"><Icon name="check" /> {g.title} — Kaydet</button>
+          </div>
+        </form>
+      </section>
+    ))}
+
+    <section class="adm-section" id="sistem" aria-labelledby="h-sistem" tabindex="-1">
+      <div class="adm-section-head"><h2 id="h-sistem">Sunucu ve yayın ayarları</h2></div>
+      <p class="adm-lead">Bunlar panelden değil, hosting panelindeki ortam değişkenlerinden yapılır. Burada yalnızca durumları gösterilir.</p>
+      <ul class="adm-checklist">
+        {system.map((s) => (
+          <li class={s.done ? 'is-done' : ''}>
+            <span class="adm-check-icon">{s.done ? <Icon name="check" /> : <Icon name="alert" />}</span>
+            <div><p class="adm-check-title">{s.title}</p><p class="adm-hint">{s.text}</p></div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+  <script>
+    // “Yalnızca eksik alanları göster”: dolu alanları ve tamamen dolu bölümleri gizler
+    const toggle = document.querySelector<HTMLInputElement>('[data-only-missing]');
+    const apply = () => {
+      const on = !!toggle?.checked;
+      document.querySelectorAll<HTMLElement>('[data-filled="1"]').forEach((el) => { el.hidden = on; });
+      document.querySelectorAll<HTMLElement>('[data-group]').forEach((sec) => {
+        sec.hidden = on && !sec.querySelector('[data-filled="0"]');
+      });
+    };
+    toggle?.addEventListener('change', apply);
+    // Kaydedilemediyse ilk hatalı alana git
+    document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  </script>
+</AdminLayout>

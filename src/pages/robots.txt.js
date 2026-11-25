@@ -13,6 +13,7 @@ export function GET() {
     'User-agent: *',
     'Allow: /',
     'Disallow: /api/',
+    'Disallow: /yonetim',
     '',
   ];
   if (indexingEnabled) lines.push(`Sitemap: ${absoluteUrl('/sitemap.xml')}`);

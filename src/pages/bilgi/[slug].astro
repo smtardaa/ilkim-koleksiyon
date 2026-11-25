@@ -5,27 +5,44 @@
  * Yasal metinler (mesafeli satış, ön bilgilendirme, KVKK) hukuki danışmanla tamamlanmalıdır.
  * Tamamlanana kadar bu sayfalar noindex'tir (InfoPage skeleton).
  */
-export const prerender = true;
+export const prerender = false; // panelden girilen bilgiler hemen yansısın diye istek anında
 import InfoPage from '../../components/InfoPage.astro';
 import { business, filled, PLACEHOLDER } from '../../config/business.js';
 
-export function getStaticPaths() {
-  return [
-    { params: { slug: 'kargo-ve-teslimat' }, props: { title: 'Kargo ve teslimat', description: 'Kargo firması, kargo bedeli, kargoya teslim süresi ve paketleme bilgileri.' } },
-    { params: { slug: 'iade-ve-cayma' }, props: { title: 'İade ve cayma hakkı', description: 'Cayma hakkı, iade koşulları ve iade süreci.' } },
-    { params: { slug: 'gizlilik-ve-kvkk' }, props: { title: 'Gizlilik ve KVKK aydınlatma metni', description: 'Kişisel verilerin işlenmesi ve gizlilik politikası.' } },
-    { params: { slug: 'cerez-politikasi' }, props: { title: 'Çerez politikası', description: 'Sitede kullanılan çerezler ve yerel depolama.' } },
-  ];
-}
-const { slug } = Astro.params;
-const { title, description } = Astro.props;
+const PAGES: Record<string, { title: string; description: string }> = {
+  'kargo-ve-teslimat': { title: 'Kargo ve teslimat', description: 'Kargo firması, kargo bedeli, kargoya teslim süresi ve paketleme bilgileri.' },
+  'iade-ve-cayma': { title: 'İade ve cayma hakkı', description: 'Cayma hakkı, iade koşulları ve iade süreci.' },
+  'gizlilik-ve-kvkk': { title: 'Gizlilik ve KVKK aydınlatma metni', description: 'Kişisel verilerin işlenmesi ve gizlilik politikası.' },
+  'cerez-politikasi': { title: 'Çerez politikası', description: 'Sitede kullanılan çerezler ve yerel depolama.' },
+};
+const slug = Astro.params.slug ?? '';
+const page = PAGES[slug];
+if (!page) return new Response(null, { status: 404 });
+const { title, description } = page;
 const b = business;
 const cm = b.commerce;
 const L = b.legal;
 const show = (x: any) => (filled(x) ? x : null);
-const isComplete = false; // Metinler tamamlandığında true yapılarak sayfa indekslemeye açılabilir.
+// Panelden tam metin girildiyse sayfa iskelet olmaktan çıkar (Doldurulacaklar → Bilgi sayfası metinleri).
+const fullText: string | null = show((b as any).legalTexts?.[slug]);
+const isComplete = Boolean(fullText);
+const paragraphs = fullText ? fullText.split(/\n{2,}/).map((p: string) => p.split('\n')) : [];
 ---
 <InfoPage title={title} path={`/bilgi/${slug}`} description={description} skeleton={!isComplete}>
+  {isComplete && (
+    <>
+      {slug === 'kargo-ve-teslimat' && (
+        <dl>
+          {show(cm.carriers) && <><dt>Kargo firması</dt><dd>{cm.carriers}</dd></>}
+          {show(cm.shippingFee) && <><dt>Kargo bedeli</dt><dd>{cm.shippingFee}</dd></>}
+          {show(cm.dispatchTime) && <><dt>Kargoya teslim süresi</dt><dd>{cm.dispatchTime}</dd></>}
+          {show(cm.shippingRegions) && <><dt>Teslimat bölgesi</dt><dd>{cm.shippingRegions}</dd></>}
+        </dl>
+      )}
+      {paragraphs.map((lines: string[]) => <p>{lines.map((l, i) => <>{i > 0 && <br />}{l}</>)}</p>)}
+    </>
+  )}
+  {!isComplete && (<>
   {slug === 'kargo-ve-teslimat' && (
     <>
       <h2>Kargo bilgileri</h2>
@@ -72,4 +89,5 @@ const isComplete = false; // Metinler tamamlandığında true yapılarak sayfa i
       <p><span class="placeholder">{PLACEHOLDER}</span> — Analitik/pazarlama araçları eklenirse bu bölüm ve gerekli açık rıza mekanizması güncellenmelidir.</p>
     </>
   )}
+  </>)}
 </InfoPage>

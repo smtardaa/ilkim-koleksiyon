@@ -1,5 +1,5 @@
 ---
-export const prerender = true;
+export const prerender = false; // panelden girilen bilgiler hemen yansısın diye istek anında
 import InfoPage from '../components/InfoPage.astro';
 import { business, filled, PLACEHOLDER } from '../config/business.js';
 const a = business.about;
@@ -18,7 +18,7 @@ const v = (x: any) => (filled(x) ? x : null);
     <dt>Uzmanlık alanı</dt><dd>{v(a.expertise) ?? <span class="placeholder">{PLACEHOLDER}</span>}</dd>
     <dt>Ticari unvan</dt><dd>{v(business.legal.companyTitle) ?? <span class="placeholder">{PLACEHOLDER}</span>}</dd>
   </dl>
-  <p class="small muted">Bu alanlar <code>src/config/business.js</code> dosyasından doldurulur.</p>
+  <p class="small muted">Bu alanlar yönetim panelindeki “Doldurulacaklar” sayfasından doldurulur.</p>
 
   <h2>Nasıl satın alınır?</h2>
   <p>Ürünlerin fiyatları katalogda yer alır. Sitede çevrim içi ödeme alınmaz; bir ürünü satın almak için ürün sayfasındaki “Satın almak için iletişime geç” düğmesiyle WhatsApp üzerinden işletmeye ulaşabilirsiniz. Kargo ve iade koşulları ilgili sayfalarda yer alır.</p>

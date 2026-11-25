@@ -1,0 +1,554 @@
+---
+/**
+ * PANEL 1. SAYFA — GENEL YÖNETİM: ürünler, kategoriler, ülkeler, seçkiler.
+ * Ürün ekleme/düzenleme bu sayfada açılan pencerede yapılır (src/scripts/admin.js → /yonetim/urun-kaydet).
+ * Diğer formlar bu sayfaya POST edilir; başarıda aynı sayfaya mesajla dönülür.
+ */
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getStore } from '../../lib/store/index.js';
+import { readAdminForm, formToObject, redirectWith } from '../../lib/admin/request.js';
+import {
+  saveCountry, deleteCountry, saveCategory, saveCollection, deleteCollection, setPublished, deleteProduct,
+  productToForm, STATUS_LABELS, KIND_LABELS, MAX_IMAGES,
+} from '../../lib/admin/service.js';
+import { removeUploads } from '../../lib/admin/images.js';
+import { settingsProgress } from '../../lib/admin/settings-schema.js';
+import { uploadsDir } from '../../config/site.js';
+import { formatMoney } from '../../lib/format.js';
+import nodePath from 'node:path';
+
+export const prerender = false;
+
+const store = getStore();
+const session = (Astro.locals as any).admin;
+let error: { section: string; text: string } | null = null;
+
+if (Astro.request.method === 'POST') {
+  const r = await readAdminForm(Astro);
+  if (!r.ok) { error = { section: 'genel', text: r.error }; Astro.response.status = r.status; }
+  else {
+    const islem = String(r.form.get('islem') ?? '');
+    const f = formToObject(r.form, ['members']);
+    let res: any = { ok: false, error: 'Bilinmeyen işlem.' };
+    let section = 'genel';
+    let message = '';
+    if (islem === 'urun-yayin') {
+      section = 'urunler';
+      res = await setPublished(store, f.id, f.published === '1');
+      message = f.published === '1' ? 'Ürün yeniden yayında.' : 'Ürün yayından kaldırıldı; sitede görünmüyor.';
+    } else if (islem === 'urun-sil') {
+      section = 'urunler';
+      res = await deleteProduct(store, f.id);
+      if (res.ok) await removeUploads(res.product.images, nodePath.resolve(uploadsDir));
+      message = res.ok ? `“${res.product.title}” kalıcı olarak silindi.` : '';
+    } else if (islem === 'ulke-kaydet') {
+      section = 'ulkeler';
+      res = await saveCountry(store, f);
+      message = res.ok ? (res.renamed ? `Ülke adı “${res.country.name}” olarak güncellendi.` : `“${res.country.name}” ülke listesine eklendi.`) : '';
+    } else if (islem === 'ulke-sil') {
+      section = 'ulkeler';
+      res = await deleteCountry(store, f.slug);
+      message = res.ok ? `“${res.country.name}” listeden kaldırıldı.` : '';
+    } else if (islem === 'kategori-kaydet') {
+      section = 'kategoriler';
+      res = await saveCategory(store, f);
+      message = res.ok ? `“${res.category.title}” kategorisi kaydedildi.` : '';
+    } else if (islem === 'secki-kaydet') {
+      section = 'seckiler';
+      if (f.membersSent !== '1') delete f.members;
+      res = await saveCollection(store, f);
+      message = res.ok ? `“${res.collection.title}” seçkisi kaydedildi.` : '';
+    } else if (islem === 'secki-sil') {
+      section = 'seckiler';
+      res = await deleteCollection(store, f.handle);
+      message = res.ok ? `“${res.collection.title}” seçkisi silindi.` : '';
+    }
+    if (res.ok) return redirectWith(Astro, '/yonetim', message, section);
+    error = { section, text: res.error };
+    Astro.response.status = 422;
+  }
+}
+
+const snap = await store.getSnapshot();
+const products = [...snap.products].sort((a: any, b: any) => (b.order ?? 0) - (a.order ?? 0));
+const categories = snap.categories.filter((c: any) => !c.parent).sort((a: any, b: any) => a.sort - b.sort);
+const catTitle = new Map(categories.map((c: any) => [c.path, c.title]));
+const countIn = (path: string) => products.filter((p: any) => p.categoryPaths?.includes(path)).length;
+const countryUse = new Map<string, number>();
+for (const p of products) if (p.specs?.countrySlug) countryUse.set(p.specs.countrySlug, (countryUse.get(p.specs.countrySlug) ?? 0) + 1);
+const stats = {
+  total: products.length,
+  live: products.filter((p: any) => p.published !== false).length,
+  sold: products.filter((p: any) => p.availability?.status === 'sold').length,
+  countries: snap.countries.length,
+  collections: snap.collections.length,
+};
+const progress = settingsProgress(snap.settings ?? {});
+const ok = Astro.url.searchParams.get('tamam');
+const formData = JSON.stringify({
+  products: products.map(productToForm),
+  foreign: categories.filter((c: any) => c.countries).map((c: any) => c.path),
+  maxImages: MAX_IMAGES,
+}).replace(/</g, '\\u003c');
+const errFor = (s: string) => (error?.section === s ? error.text : null);
+---
+<AdminLayout title="Genel yönetim" active="genel" missing={progress.missing}>
+  <div class="adm-wrap">
+    <div class="adm-head">
+      <div>
+        <h1>Genel yönetim</h1>
+        <p class="adm-lead">Ürünleri, kategorileri, ülkeleri ve seçkileri buradan yönetirsiniz. Kaydettiğiniz her değişiklik sitede hemen görünür.</p>
+      </div>
+      <button type="button" class="btn btn--lime" data-product-new><Icon name="plus" /> Yeni ürün ekle</button>
+    </div>
+
+    {ok && <p class="adm-alert adm-alert--ok" role="status"><Icon name="check" /> {ok}</p>}
+    {errFor('genel') && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {errFor('genel')}</p>}
+
+    <ul class="adm-stats" aria-label="Özet">
+      <li><span class="adm-stat-num">{stats.total}</span><span>Toplam ürün</span></li>
+      <li><span class="adm-stat-num">{stats.live}</span><span>Sitede yayında</span></li>
+      <li><span class="adm-stat-num">{stats.sold}</span><span>Satıldı</span></li>
+      <li><span class="adm-stat-num">{stats.countries}</span><span>Ülke</span></li>
+      <li><span class="adm-stat-num">{stats.collections}</span><span>Seçki</span></li>
+    </ul>
+
+    {progress.missing > 0 && (
+      <a class="adm-nudge" href="/yonetim/eksikler">
+        <Icon name="alert" />
+        <span><strong>{progress.missing} işletme bilgisi henüz doldurulmadı</strong> (WhatsApp, iletişim, kargo, yasal metinler…). Doldurulacaklar sayfasına git</span>
+        <Icon name="arrow-right" />
+      </a>
+    )}
+
+    <nav class="adm-jump" aria-label="Bu sayfadaki bölümler">
+      <a href="#urunler">Ürünler <span>{stats.total}</span></a>
+      <a href="#kategoriler">Kategoriler <span>{categories.length}</span></a>
+      <a href="#ulkeler">Ülkeler <span>{stats.countries}</span></a>
+      <a href="#seckiler">Seçkiler <span>{stats.collections}</span></a>
+    </nav>
+
+    <!-- ============================== ÜRÜNLER ============================== -->
+    <section class="adm-section" id="urunler" aria-labelledby="h-urunler" tabindex="-1">
+      <div class="adm-section-head">
+        <h2 id="h-urunler">Ürünler</h2>
+        <button type="button" class="btn btn--outline btn--sm" data-product-new><Icon name="plus" /> Yeni ürün</button>
+      </div>
+      {errFor('urunler') && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {errFor('urunler')}</p>}
+
+      {products.length === 0 ? (
+        <div class="adm-empty">
+          <Icon name="image" />
+          <p><strong>Henüz ürün eklenmedi.</strong></p>
+          <p>İlk ürünü eklemek için <em>Yeni ürün ekle</em> düğmesine basın. Eklenen ürün kendi kategorisinde ve ana sayfadaki bölümünde görünür.</p>
+        </div>
+      ) : (
+        <>
+          <div class="adm-filters" role="search">
+            <label class="adm-field adm-field--inline">
+              <span>Ara</span>
+              <input class="adm-input" type="search" placeholder="Ürün adı veya kodu" data-filter-text />
+            </label>
+            <label class="adm-field adm-field--inline">
+              <span>Kategori</span>
+              <select class="adm-input" data-filter-cat>
+                <option value="">Tümü</option>
+                {categories.map((c: any) => <option value={c.path}>{c.title}</option>)}
+              </select>
+            </label>
+            <label class="adm-field adm-field--inline">
+              <span>Durum</span>
+              <select class="adm-input" data-filter-status>
+                <option value="">Tümü</option>
+                {Object.entries(STATUS_LABELS).map(([k, v]) => <option value={k}>{v}</option>)}
+                <option value="hidden">Yayında değil</option>
+              </select>
+            </label>
+          </div>
+          <p class="adm-hint" data-filter-count aria-live="polite">{products.length} ürün gösteriliyor</p>
+
+          <ul class="adm-products">
+            {products.map((p: any) => {
+              const status = p.availability?.status ?? 'in_stock';
+              const live = p.published !== false;
+              const cat = p.categoryPaths?.[0];
+              const thumb = p.images?.[0];
+              return (
+                <li class="adm-product" data-text={`${p.title} ${p.sku ?? ''}`.toLocaleLowerCase('tr')} data-cat={cat} data-status={status} data-live={live ? '1' : '0'}>
+                  <div class="adm-thumb">{thumb ? <img src={thumb.srcSmall ?? thumb.src} alt="" width="72" height="72" loading="lazy" /> : <Icon name="image" />}</div>
+                  <div class="adm-product-main">
+                    <p class="adm-product-title">{p.title}</p>
+                    <p class="adm-product-meta">
+                      {p.sku ? <span>Kod: <strong>{p.sku}</strong></span> : <span class="adm-missing">Kod yok</span>}
+                      <span>{catTitle.get(cat) ?? 'Kategori yok'}{p.specs?.country ? ` · ${p.specs.country}` : ''}</span>
+                    </p>
+                  </div>
+                  <p class="adm-price">{formatMoney(p.price)}</p>
+                  <div class="adm-badges">
+                    <span class={`adm-badge adm-badge--${status}`}>{STATUS_LABELS[status as keyof typeof STATUS_LABELS]}</span>
+                    {!live && <span class="adm-badge adm-badge--hidden">Yayında değil</span>}
+                  </div>
+                  <div class="adm-actions">
+                    <button type="button" class="btn btn--outline btn--sm" data-product-edit={p.id}><Icon name="edit" /> Düzenle</button>
+                    {live && <a class="btn btn--outline btn--sm" href={`/urun/${encodeURIComponent(p.handle)}`} target="_blank" rel="noopener"><Icon name="eye" /> Sitede gör</a>}
+                    <form method="post">
+                      <input type="hidden" name="_csrf" value={session.csrf} />
+                      <input type="hidden" name="islem" value="urun-yayin" />
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="published" value={live ? '0' : '1'} />
+                      <button class="btn btn--outline btn--sm" type="submit">{live ? 'Yayından kaldır' : 'Yayınla'}</button>
+                    </form>
+                    <form method="post" data-confirm={`“${p.title}” kalıcı olarak silinsin mi? Bu işlem geri alınamaz; görselleri de silinir.`}>
+                      <input type="hidden" name="_csrf" value={session.csrf} />
+                      <input type="hidden" name="islem" value="urun-sil" />
+                      <input type="hidden" name="id" value={p.id} />
+                      <button class="btn btn--sm adm-btn-danger" type="submit"><Icon name="trash" /> Sil</button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <p class="adm-empty adm-empty--small" data-filter-empty hidden>Bu filtrelere uyan ürün yok.</p>
+        </>
+      )}
+    </section>
+
+    <!-- ============================ KATEGORİLER ============================ -->
+    <section class="adm-section" id="kategoriler" aria-labelledby="h-kategoriler" tabindex="-1">
+      <div class="adm-section-head">
+        <h2 id="h-kategoriler">Kategoriler</h2>
+      </div>
+      <p class="adm-lead">Sitedeki 12 kategori sabittir. Adını, sırasını, açıklamasını ve kart görselini değiştirebilirsiniz. Değiştirmek için kategoriye tıklayın.</p>
+      {errFor('kategoriler') && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {errFor('kategoriler')}</p>}
+      <div class="adm-acc">
+        {categories.map((c: any) => (
+          <details class="adm-acc-item">
+            <summary>
+              <span class="adm-thumb adm-thumb--sm">{c.image?.src ? <img src={c.image.src} alt="" width="48" height="48" loading="lazy" referrerpolicy="no-referrer" /> : <Icon name="image" />}</span>
+              <span class="adm-acc-title">{c.title}</span>
+              <span class="adm-acc-meta">Sıra {c.sort} · {countIn(c.path)} ürün{c.countries ? ' · ülke seçimli' : ''}</span>
+              <Icon name="chevron-down" />
+            </summary>
+            <form method="post" class="adm-form adm-grid">
+              <input type="hidden" name="_csrf" value={session.csrf} />
+              <input type="hidden" name="islem" value="kategori-kaydet" />
+              <input type="hidden" name="path" value={c.path} />
+              <div class="adm-field adm-span-2">
+                <label for={`ct-${c.path}`}>Kategori adı</label>
+                <input class="adm-input" id={`ct-${c.path}`} name="title" value={c.title} required maxlength="80" />
+              </div>
+              <div class="adm-field">
+                <label for={`cs-${c.path}`}>Sıra</label>
+                <input class="adm-input" id={`cs-${c.path}`} name="sort" type="number" min="0" max="999" value={c.sort} required />
+                <p class="adm-hint">Küçük sayı önce gösterilir.</p>
+              </div>
+              <div class="adm-field adm-span-3">
+                <label for={`cd-${c.path}`}>Açıklama</label>
+                <textarea class="adm-input" id={`cd-${c.path}`} name="description" rows="2" maxlength="400">{c.description ?? ''}</textarea>
+              </div>
+              <div class="adm-field adm-span-3">
+                <label for={`ci-${c.path}`}>Kart görseli adresi</label>
+                <input class="adm-input" id={`ci-${c.path}`} name="imageSrc" type="url" value={c.image?.src ?? ''} placeholder="https://…" />
+                <p class="adm-hint">İnternetteki bir görselin bağlantısı. Lisanslı görsellerde aşağıdaki atıf bilgileri “Görsel kaynakları” sayfasında gösterilir.</p>
+              </div>
+              <div class="adm-field"><label for={`ca-${c.path}`}>Görsel sahibi</label><input class="adm-input" id={`ca-${c.path}`} name="creditAuthor" value={c.image?.credit?.author ?? ''} /></div>
+              <div class="adm-field"><label for={`cl-${c.path}`}>Lisans</label><input class="adm-input" id={`cl-${c.path}`} name="creditLicense" value={c.image?.credit?.license ?? ''} placeholder="ör. CC BY-SA 4.0" /></div>
+              <div class="adm-field"><label for={`clu-${c.path}`}>Lisans bağlantısı</label><input class="adm-input" id={`clu-${c.path}`} name="creditLicenseUrl" type="url" value={c.image?.credit?.licenseUrl ?? ''} /></div>
+              <div class="adm-field adm-span-3"><label for={`csu-${c.path}`}>Görselin kaynak sayfası</label><input class="adm-input" id={`csu-${c.path}`} name="creditSourceUrl" type="url" value={c.image?.credit?.sourceUrl ?? ''} /></div>
+              <div class="adm-form-actions adm-span-3">
+                <button class="btn btn--sm" type="submit"><Icon name="check" /> Kaydet</button>
+                <a class="adm-link-plain" href={`/kategori/${c.path}`} target="_blank" rel="noopener">Kategori sayfasını aç</a>
+              </div>
+            </form>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <!-- =============================== ÜLKELER ============================== -->
+    <section class="adm-section" id="ulkeler" aria-labelledby="h-ulkeler" tabindex="-1">
+      <div class="adm-section-head">
+        <h2 id="h-ulkeler">Ülkeler</h2>
+      </div>
+      <p class="adm-lead">“Yabancı Madeni Paralar” ve “Yabancı Kağıt Paralar” kategorilerindeki “Ülke seç” listesi buradan gelir. Her ülkenin kendi sayfası otomatik oluşur.</p>
+      {errFor('ulkeler') && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {errFor('ulkeler')}</p>}
+      <div class="adm-cards-2">
+        <form method="post" class="adm-card adm-form">
+          <h3>Yeni ülke ekle</h3>
+          <input type="hidden" name="_csrf" value={session.csrf} />
+          <input type="hidden" name="islem" value="ulke-kaydet" />
+          <div class="adm-field">
+            <label for="new-country">Ülke adı</label>
+            <input class="adm-input" id="new-country" name="name" required maxlength="80" placeholder="ör. Yeni Zelanda" />
+            <p class="adm-hint">Sayfa adresi addan otomatik üretilir.</p>
+          </div>
+          <button class="btn btn--sm" type="submit"><Icon name="plus" /> Ekle</button>
+        </form>
+        <form method="post" class="adm-card adm-form">
+          <h3>Ülke adını düzelt</h3>
+          <input type="hidden" name="_csrf" value={session.csrf} />
+          <input type="hidden" name="islem" value="ulke-kaydet" />
+          <div class="adm-field">
+            <label for="ren-from">Düzeltilecek ülke</label>
+            <select class="adm-input" id="ren-from" name="previousSlug" required>
+              <option value="">Seçin…</option>
+              {snap.countries.map((c: any) => <option value={c.slug}>{c.name}</option>)}
+            </select>
+          </div>
+          <div class="adm-field">
+            <label for="ren-to">Yeni ad</label>
+            <input class="adm-input" id="ren-to" name="name" required maxlength="80" />
+            <p class="adm-hint">Bu ülkedeki ürünler de yeni ada taşınır.</p>
+          </div>
+          <button class="btn btn--sm" type="submit"><Icon name="check" /> Kaydet</button>
+        </form>
+      </div>
+
+      <details class="adm-card adm-country-list">
+        <summary><strong>Ülke listesi ({stats.countries})</strong> — görmek, aramak veya kaldırmak için açın <Icon name="chevron-down" /></summary>
+        <label class="adm-field adm-field--inline">
+          <span>Ülke ara</span>
+          <input class="adm-input" type="search" data-country-filter placeholder="ör. Almanya" />
+        </label>
+        <ul class="adm-countries" data-country-list>
+          {snap.countries.map((c: any) => {
+            const used = countryUse.get(c.slug) ?? 0;
+            return (
+              <li data-name={c.name.toLocaleLowerCase('tr')}>
+                <span>{c.name}</span>
+                <span class="adm-hint">{used ? `${used} ürün` : 'ürün yok'}</span>
+                {used === 0 && (
+                  <form method="post" data-confirm={`“${c.name}” ülke listesinden kaldırılsın mı?`}>
+                    <input type="hidden" name="_csrf" value={session.csrf} />
+                    <input type="hidden" name="islem" value="ulke-sil" />
+                    <input type="hidden" name="slug" value={c.slug} />
+                    <button class="adm-icon-btn" type="submit" aria-label={`${c.name} ülkesini kaldır`}><Icon name="trash" /></button>
+                  </form>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </details>
+    </section>
+
+    <!-- =============================== SEÇKİLER ============================= -->
+    <section class="adm-section" id="seckiler" aria-labelledby="h-seckiler" tabindex="-1">
+      <div class="adm-section-head">
+        <h2 id="h-seckiler">Seçkiler</h2>
+      </div>
+      <p class="adm-lead">Seçki, farklı kategorilerdeki ürünleri bir arada gösteren özel listedir (ör. Sertifikalı Paralar). Ürünler kendi kategorilerinde de görünmeye devam eder.</p>
+      {errFor('seckiler') && <p class="adm-alert adm-alert--error" role="alert"><Icon name="alert" /> {errFor('seckiler')}</p>}
+      <div class="adm-acc">
+        {snap.collections.map((col: any) => {
+          const members = products.filter((p: any) => p.collections?.includes(col.handle));
+          return (
+            <details class="adm-acc-item">
+              <summary>
+                <span class="adm-acc-title">{col.title}</span>
+                <span class="adm-acc-meta">{members.length} ürün · /koleksiyonlar/{col.handle}</span>
+                <Icon name="chevron-down" />
+              </summary>
+              <form method="post" class="adm-form">
+                <input type="hidden" name="_csrf" value={session.csrf} />
+                <input type="hidden" name="islem" value="secki-kaydet" />
+                <input type="hidden" name="handle" value={col.handle} />
+                <input type="hidden" name="membersSent" value="1" />
+                <div class="adm-field">
+                  <label for={`kt-${col.handle}`}>Seçki adı</label>
+                  <input class="adm-input" id={`kt-${col.handle}`} name="title" value={col.title} required maxlength="80" />
+                </div>
+                <div class="adm-field">
+                  <label for={`kd-${col.handle}`}>Açıklama</label>
+                  <textarea class="adm-input" id={`kd-${col.handle}`} name="description" rows="2" maxlength="400">{col.description ?? ''}</textarea>
+                </div>
+                <fieldset class="adm-fieldset">
+                  <legend>Bu seçkideki ürünler</legend>
+                  {products.length === 0
+                    ? <p class="adm-hint">Henüz ürün yok. Ürün ekledikten sonra burada veya ürün penceresinde seçkiye ekleyebilirsiniz.</p>
+                    : <div class="adm-checks">{products.map((p: any) => (
+                        <label><input type="checkbox" name="members" value={p.id} checked={p.collections?.includes(col.handle)} /> {p.title}{p.sku ? ` (${p.sku})` : ''}</label>
+                      ))}</div>}
+                </fieldset>
+                <div class="adm-form-actions">
+                  <button class="btn btn--sm" type="submit"><Icon name="check" /> Kaydet</button>
+                  <a class="adm-link-plain" href={`/koleksiyonlar/${col.handle}`} target="_blank" rel="noopener">Seçki sayfasını aç</a>
+                </div>
+              </form>
+              <form method="post" class="adm-form-delete" data-confirm={`“${col.title}” seçkisi silinsin mi? Ürünler silinmez, yalnızca bu listeden çıkar.`}>
+                <input type="hidden" name="_csrf" value={session.csrf} />
+                <input type="hidden" name="islem" value="secki-sil" />
+                <input type="hidden" name="handle" value={col.handle} />
+                <button class="btn btn--sm adm-btn-danger" type="submit"><Icon name="trash" /> Seçkiyi sil</button>
+              </form>
+            </details>
+          );
+        })}
+      </div>
+      <form method="post" class="adm-card adm-form adm-new-collection">
+        <h3>Yeni seçki oluştur</h3>
+        <input type="hidden" name="_csrf" value={session.csrf} />
+        <input type="hidden" name="islem" value="secki-kaydet" />
+        <div class="adm-field"><label for="nk-title">Seçki adı</label><input class="adm-input" id="nk-title" name="title" required maxlength="80" placeholder="ör. Nadir Banknotlar" /></div>
+        <div class="adm-field"><label for="nk-desc">Açıklama</label><textarea class="adm-input" id="nk-desc" name="description" rows="2" maxlength="400"></textarea></div>
+        <button class="btn btn--sm" type="submit"><Icon name="plus" /> Oluştur</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- ============================ ÜRÜN PENCERESİ ============================ -->
+  <dialog class="adm-dialog" id="product-dialog" aria-labelledby="pd-title" slot="end">
+    <form class="adm-form adm-dialog-form" enctype="multipart/form-data" data-product-form novalidate>
+      <div class="adm-dialog-head">
+        <h2 id="pd-title" data-pd-title>Yeni ürün</h2>
+        <button type="button" class="adm-icon-btn" data-pd-close aria-label="Pencereyi kapat"><Icon name="close" /></button>
+      </div>
+      <div class="adm-dialog-body">
+        <div class="adm-alert adm-alert--error" role="alert" data-pd-errors hidden></div>
+        <input type="hidden" name="_csrf" value={session.csrf} />
+        <input type="hidden" name="id" />
+
+        <fieldset class="adm-fieldset">
+          <legend>1. Temel bilgiler</legend>
+          <div class="adm-grid">
+            <div class="adm-field adm-span-3">
+              <label for="pd-name">Ürün adı <span class="adm-req">zorunlu</span></label>
+              <input class="adm-input" id="pd-name" name="title" required maxlength="200" />
+              <p class="adm-error" data-err="title"></p>
+            </div>
+            <div class="adm-field">
+              <label for="pd-price">Fiyat (TL) <span class="adm-req">zorunlu</span></label>
+              <input class="adm-input" id="pd-price" name="price" inputmode="decimal" required placeholder="ör. 1.250" />
+              <p class="adm-error" data-err="price"></p>
+            </div>
+            <div class="adm-field">
+              <label for="pd-sku">Ürün kodu</label>
+              <input class="adm-input" id="pd-sku" name="sku" maxlength="60" placeholder="ör. IK-0001" />
+              <p class="adm-hint">WhatsApp mesajında yazar.</p>
+              <p class="adm-error" data-err="sku"></p>
+            </div>
+            <div class="adm-field">
+              <span class="adm-label">Sitede</span>
+              <label class="adm-switch"><input type="checkbox" name="published" value="1" checked /> Yayında</label>
+              <p class="adm-hint">İşaret kaldırılırsa ürün sitede görünmez.</p>
+            </div>
+          </div>
+          <div class="adm-field">
+            <span class="adm-label">Durum</span>
+            <div class="adm-radios">
+              {Object.entries(STATUS_LABELS).map(([k, v], i) => <label><input type="radio" name="status" value={k} checked={i === 0} /> {v}</label>)}
+            </div>
+            <p class="adm-hint">“Satıldı” ürünlerde satın alma düğmesi gösterilmez.</p>
+          </div>
+        </fieldset>
+
+        <fieldset class="adm-fieldset">
+          <legend>2. Kategori ve ülke</legend>
+          <div class="adm-grid">
+            <div class="adm-field adm-span-2">
+              <label for="pd-cat">Kategori <span class="adm-req">zorunlu</span></label>
+              <select class="adm-input" id="pd-cat" name="category" required data-pd-cat>
+                <option value="">Seçin…</option>
+                {categories.map((c: any) => <option value={c.path}>{c.title}</option>)}
+              </select>
+              <p class="adm-error" data-err="category"></p>
+            </div>
+            <div class="adm-field">
+              <label for="pd-country">Ülke <span class="adm-req" data-pd-country-req hidden>zorunlu</span></label>
+              <select class="adm-input" id="pd-country" name="country" data-pd-country>
+                <option value="">Seçilmedi</option>
+                {snap.countries.map((c: any) => <option value={c.slug}>{c.name}</option>)}
+              </select>
+              <p class="adm-hint">Yabancı para kategorilerinde zorunludur. Listede yoksa önce “Ülkeler” bölümünden ekleyin.</p>
+              <p class="adm-error" data-err="country"></p>
+            </div>
+          </div>
+          {snap.collections.length > 0 && (
+            <div class="adm-field">
+              <span class="adm-label">Seçkiler</span>
+              <div class="adm-checks adm-checks--row">
+                {snap.collections.map((c: any) => <label><input type="checkbox" name="collections" value={c.handle} /> {c.title}</label>)}
+              </div>
+            </div>
+          )}
+        </fieldset>
+
+        <fieldset class="adm-fieldset">
+          <legend>3. Görseller</legend>
+          <p class="adm-hint">İlk görsel ürün kartında gösterilir. Sırayı oklarla değiştirebilirsiniz. JPEG, PNG, WebP veya HEIC; her biri en fazla 15 MB, toplam {MAX_IMAGES} görsel. Görseller otomatik küçültülür.</p>
+          <ul class="adm-images" data-pd-images></ul>
+          <div class="adm-field">
+            <label for="pd-files" class="adm-upload"><Icon name="image" /> Görsel seç…</label>
+            <input class="visually-hidden" id="pd-files" type="file" name="yeniGorsel" accept="image/*" multiple data-pd-files />
+            <p class="adm-hint" data-pd-files-info></p>
+            <p class="adm-error" data-err="images"></p>
+          </div>
+        </fieldset>
+
+        <fieldset class="adm-fieldset">
+          <legend>4. Açıklama</legend>
+          <div class="adm-field">
+            <label for="pd-summary">Kısa açıklama</label>
+            <input class="adm-input" id="pd-summary" name="summary" maxlength="300" />
+            <p class="adm-error" data-err="summary"></p>
+          </div>
+          <div class="adm-field">
+            <label for="pd-desc">Ayrıntılı açıklama</label>
+            <textarea class="adm-input" id="pd-desc" name="description" rows="5" maxlength="8000"></textarea>
+            <p class="adm-hint">Paragrafları boş satırla ayırın.</p>
+            <p class="adm-error" data-err="description"></p>
+          </div>
+        </fieldset>
+
+        <details class="adm-fieldset adm-more">
+          <summary>5. Nümismatik özellikler <span class="adm-hint">(isteğe bağlı, ürün sayfasında ve filtrelerde kullanılır)</span></summary>
+          <div class="adm-grid">
+            <div class="adm-field">
+              <label for="pd-kind">Tür</label>
+              <select class="adm-input" id="pd-kind" name="kind">
+                <option value="">Seçilmedi</option>
+                {Object.entries(KIND_LABELS).map(([k, v]) => <option value={k}>{v}</option>)}
+              </select>
+            </div>
+            <div class="adm-field"><label for="pd-y1">Yıl</label><input class="adm-input" id="pd-y1" name="yearFrom" inputmode="numeric" /><p class="adm-error" data-err="yearFrom"></p></div>
+            <div class="adm-field"><label for="pd-y2">Bitiş yılı (aralıksa)</label><input class="adm-input" id="pd-y2" name="yearTo" inputmode="numeric" /><p class="adm-error" data-err="yearTo"></p></div>
+            <div class="adm-field">
+              <span class="adm-label">Takvim</span>
+              <div class="adm-radios"><label><input type="radio" name="calendar" value="miladi" checked /> Miladi</label><label><input type="radio" name="calendar" value="hicri" /> Hicri</label></div>
+            </div>
+            <div class="adm-field adm-span-2"><label for="pd-yt">Yıl, üzerindeki yazımıyla</label><input class="adm-input" id="pd-yt" name="yearText" placeholder="ör. 1293/30" /></div>
+            <div class="adm-field"><label for="pd-dv">Nominal değer</label><input class="adm-input" id="pd-dv" name="denominationValue" inputmode="decimal" placeholder="ör. 5" /><p class="adm-error" data-err="denominationValue"></p></div>
+            <div class="adm-field"><label for="pd-du">Birim</label><input class="adm-input" id="pd-du" name="denominationUnit" placeholder="ör. Lira, Kuruş, Mark" /><p class="adm-error" data-err="denominationUnit"></p></div>
+            <div class="adm-field"><label for="pd-em">Emisyon</label><input class="adm-input" id="pd-em" name="emission" inputmode="numeric" placeholder="T.C. banknotlar" /><p class="adm-error" data-err="emission"></p></div>
+            <div class="adm-field"><label for="pd-ru">Hükümdar</label><input class="adm-input" id="pd-ru" name="ruler" /></div>
+            <div class="adm-field"><label for="pd-pe">Dönem</label><input class="adm-input" id="pd-pe" name="period" /></div>
+            <div class="adm-field"><label for="pd-me">Metal</label><input class="adm-input" id="pd-me" name="metal" placeholder="ör. Gümüş" /></div>
+            <div class="adm-field"><label for="pd-co">Kondisyon</label><input class="adm-input" id="pd-co" name="condition" placeholder="ör. Çil" /></div>
+            <div class="adm-field"><label for="pd-cs">Kondisyon ölçeği</label><input class="adm-input" id="pd-cs" name="conditionScale" placeholder="ör. UNC" /></div>
+            <div class="adm-field"><label for="pd-cn">Katalog no</label><input class="adm-input" id="pd-cn" name="catalogNumber" placeholder="ör. Pick P-155a" /></div>
+            <div class="adm-field"><label for="pd-ce">Sertifika kuruluşu</label><input class="adm-input" id="pd-ce" name="certService" placeholder="ör. PMG, NGC" /></div>
+            <div class="adm-field"><label for="pd-cg">Sertifika notu</label><input class="adm-input" id="pd-cg" name="certGrade" inputmode="numeric" placeholder="ör. 66" /><p class="adm-error" data-err="certGrade"></p></div>
+            <div class="adm-field"><label for="pd-cnum">Sertifika no</label><input class="adm-input" id="pd-cnum" name="certNumber" /></div>
+          </div>
+        </details>
+
+        <details class="adm-fieldset adm-more">
+          <summary>6. Arama motoru ve teslimat <span class="adm-hint">(isteğe bağlı)</span></summary>
+          <div class="adm-field"><label for="pd-st">Arama motoru başlığı</label><input class="adm-input" id="pd-st" name="seoTitle" maxlength="70" /><p class="adm-hint">Boşsa ürün adı kullanılır.</p></div>
+          <div class="adm-field"><label for="pd-sd">Arama motoru açıklaması</label><textarea class="adm-input" id="pd-sd" name="seoDescription" rows="2" maxlength="170"></textarea></div>
+          <div class="adm-field"><label for="pd-dn">Bu ürüne özel teslimat notu</label><input class="adm-input" id="pd-dn" name="deliveryNote" maxlength="300" /></div>
+        </details>
+      </div>
+      <div class="adm-dialog-foot">
+        <button type="button" class="btn btn--outline" data-pd-close>Vazgeç</button>
+        <button type="submit" class="btn btn--lime" data-pd-submit><Icon name="check" /> Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="application/json" id="adm-data" slot="end" set:html={formData}></script>
+  <script>
+    import '../../scripts/admin.js';
+  </script>
+</AdminLayout>

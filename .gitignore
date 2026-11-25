@@ -6,5 +6,7 @@ dist/
 !.env.example
 *.log
 .DS_Store
-# İleride yönetim panelinden yüklenecek ürün görselleri depoya eklenmez
+# Eski yükleme klasörü
 uploads/
+# Panelden girilen veri ve yüklenen görseller (DATA_DIR, UPLOADS_DIR varsayılanları)
+storage/

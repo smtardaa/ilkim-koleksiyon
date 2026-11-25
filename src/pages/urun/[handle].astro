@@ -134,6 +134,14 @@ const deliveryRows = [
           )}
         </div>
 
+        {product.descriptionHtml && (
+          <section aria-labelledby="desc-title">
+            <h2 id="desc-title" style="font-size:1.15rem">Açıklama</h2>
+            {/* Panelde düz metinden üretilir ve HTML kaçışlıdır (src/lib/admin/service.js → textToHtml) */}
+            <div class="prose" set:html={product.descriptionHtml} />
+          </section>
+        )}
+
         {specs.length > 0 && (
           <section aria-labelledby="spec-title">
             <h2 id="spec-title" style="font-size:1.15rem">Teknik bilgiler</h2>
