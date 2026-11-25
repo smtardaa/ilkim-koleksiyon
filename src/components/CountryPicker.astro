@@ -1,0 +1,66 @@
+---
+/**
+ * “Ülke seç” kontrolü: ülke arama alanı ve kaydırılabilir liste içeren bir pencere
+ * (masaüstünde ortada, mobilde alttan açılan panel). Seçim, bulunulan kategoriye ait
+ * ülke sayfasına götürür (ör. /kategori/yabanci-madeni-paralar/almanya).
+ * Ülkeler bağımsız ülke listesinden gelir (src/data/catalog/countries.json); ürün sayısı gösterilmez.
+ */
+import Icon from './Icon.astro';
+import { categoryUrl } from '../lib/catalog.js';
+
+interface Props {
+  category: { path: string; title: string };
+  countries: { slug: string; name: string }[];
+  current?: string | null;
+}
+const { category, countries, current = null } = Astro.props;
+const id = `cp-${category.path}`;
+---
+<div class="country-picker" data-country-picker>
+  <button type="button" class="btn btn--outline country-trigger" aria-haspopup="dialog" aria-controls={id} data-cp-open>
+    <Icon name="search" /> {current ? `Ülke: ${current}` : 'Ülke seç'}
+  </button>
+  <dialog class="country-dialog" id={id} aria-labelledby={`${id}-title`}>
+    <div class="cd-head">
+      <h2 id={`${id}-title`}>{category.title} — ülke seç</h2>
+      <button type="button" class="icon-btn" data-cp-close aria-label="Kapat"><Icon name="close" /></button>
+    </div>
+    <label class="search-field cd-search">
+      <Icon name="search" />
+      <span class="visually-hidden">Ülke ara</span>
+      <input type="search" placeholder="Ülke ara" autocomplete="off" data-cp-search />
+    </label>
+    <ul class="cd-list" data-cp-list>
+      {countries.map((c) => (
+        <li><a href={categoryUrl(`${category.path}/${c.slug}`)} aria-current={current === c.name ? 'page' : undefined}>{c.name}</a></li>
+      ))}
+    </ul>
+    <p class="small muted cd-empty" data-cp-empty hidden>Bu ada uyan ülke bulunamadı.</p>
+  </dialog>
+</div>
+<script>
+  const norm = (s: string) => s.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
+  document.querySelectorAll<HTMLElement>('[data-country-picker]').forEach((root) => {
+    const dlg = root.querySelector('dialog') as HTMLDialogElement;
+    const trigger = root.querySelector('[data-cp-open]') as HTMLButtonElement;
+    const input = root.querySelector('[data-cp-search]') as HTMLInputElement;
+    const items = [...root.querySelectorAll<HTMLLIElement>('[data-cp-list] li')];
+    const empty = root.querySelector('[data-cp-empty]') as HTMLElement;
+    trigger.addEventListener('click', () => { dlg.showModal(); input.focus(); });
+    root.querySelector('[data-cp-close]')?.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    // Escape ilk basışta kapatır (arama kutusu doluyken tarayıcı önce kutuyu temizlerdi).
+    dlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); dlg.close(); } });
+    // Kapanınca arama sıfırlanır ve odak tetikleyen kontrole döner.
+    dlg.addEventListener('close', () => {
+      if (input.value) { input.value = ''; input.dispatchEvent(new Event('input')); }
+      trigger.focus();
+    });
+    input.addEventListener('input', () => {
+      const q = norm(input.value.trim());
+      let shown = 0;
+      items.forEach((li) => { const ok = !q || norm(li.textContent ?? '').includes(q); li.hidden = !ok; if (ok) shown++; });
+      empty.hidden = shown > 0;
+    });
+  });
+</script>

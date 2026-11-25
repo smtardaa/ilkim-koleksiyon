@@ -24,7 +24,7 @@ const title = state.page > 1 ? `Tüm ürünler — Sayfa ${state.page}` : 'Tüm 
 ---
 <BaseLayout
   title={title}
-  description="İlkim Koleksiyon kataloğundaki bütün kâğıt paralar, madeni paralar, hatıra paraları ve koleksiyon malzemeleri; ülke, yıl, emisyon, kondisyon ve fiyata göre filtreleyin."
+  description="İlkim Koleksiyon kataloğundaki bütün ürünler; kategori, ülke, yıl, kondisyon ve fiyata göre filtreleyin."
   canonical={canonical}
   noindex={filtered}
   jsonLd={result ? [breadcrumbLd(crumbs), itemListLd(result.items, 'Tüm ürünler')] : undefined}

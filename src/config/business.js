@@ -65,7 +65,7 @@ export const business = {
     packaging: null,
     /** Cayma/iade süresi ve koşulları — hukuki danışmanla birlikte yazılmalı */
     returnPolicySummary: null,
-    /** Kabul edilen ödeme yöntemleri (Shopify Checkout'ta etkinleştirilenler) */
+    /** Kabul edilen ödeme yöntemleri (ör. havale/EFT) — satış WhatsApp üzerinden yapılır */
     paymentMethods: null,
     /** Fatura bilgisi (e-arşiv vb.) */
     invoiceInfo: null,
@@ -100,6 +100,21 @@ export function whatsappUrl() {
   const n = business.contact.whatsapp;
   if (!filled(n) || !/^\d{10,15}$/.test(n)) return null;
   return `https://wa.me/${n}`;
+}
+
+/**
+ * “Satın almak için iletişime geç” bağlantısı: işletmenin WhatsApp'ına ürün için hazır mesajla gider.
+ * Numara tanımlı değilse null döner (bozuk bağlantı üretilmez).
+ * @param {{title:string, sku?:string|null}} product
+ * @param {string} productAbsoluteUrl — ürün sayfasının tam adresi (canlı ortamın gerçek alan adı)
+ */
+export function whatsappProductUrl(product, productAbsoluteUrl) {
+  const base = whatsappUrl();
+  if (!base) return null;
+  const parts = [`Merhaba, ${product.title} adlı ürününüzü satın almak için bilgi almak istiyorum.`];
+  if (filled(product.sku)) parts.push(`Ürün kodu: ${product.sku}.`);
+  parts.push(`Ürün bağlantısı: ${productAbsoluteUrl}`);
+  return `${base}?text=${encodeURIComponent(parts.join(' '))}`;
 }
 
 export function phoneUrl() {

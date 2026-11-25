@@ -1,7 +1,7 @@
 /**
  * Ham alanlardan ortak `ProductSpecs` nesnesi üretir.
- * Hem demo veri dönüştürücüsü (scripts/build-demo-data.mjs) hem Shopify
- * eşleyicisi bunu kullanır; böylece filtre değerleri iki modda aynı biçimdedir.
+ * Gelecekteki yönetim paneli / MySQL sağlayıcısı ürün kaydederken veya okurken
+ * bunu kullanmalıdır; böylece filtre değerleri her zaman aynı biçimde olur.
  * Boş/bilinmeyen değerler null kalır.
  */
 import { slugify } from './slug.js';

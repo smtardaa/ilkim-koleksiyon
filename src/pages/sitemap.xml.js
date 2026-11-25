@@ -1,8 +1,7 @@
 /**
  * sitemap.xml — dinamik site haritası dizini.
  * Ürün, kategori ve seçki adresleri istek anında aynı veri sağlayıcısından üretilir;
- * Shopify'a eklenen yeni ürün, katalog önbelleği yenilendiğinde (en geç CATALOG_CACHE_TTL_SECONDS)
- * veya webhook geldiğinde haritaya otomatik girer. Elle düzenleme gerekmez.
+ * yeni eklenen ürün haritaya otomatik girer. Elle düzenleme gerekmez.
  */
 import { absoluteUrl } from '../config/site.js';
 

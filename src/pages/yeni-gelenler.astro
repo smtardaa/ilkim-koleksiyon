@@ -6,7 +6,7 @@ import ProviderError from '../components/ProviderError.astro';
 import { loadCatalog, search } from '../lib/catalog.js';
 import { parseState, hasFilters } from '../lib/search/engine.js';
 import { breadcrumbLd, itemListLd } from '../lib/seo.js';
-import { site, isDemo } from '../config/site.js';
+import { site } from '../config/site.js';
 
 const state = parseState(Astro.url.searchParams);
 if (!Astro.url.searchParams.has('siralama')) state.sort = 'yeni';
@@ -27,7 +27,7 @@ const filtered = hasFilters(state) || state.sort !== 'yeni' || !!state.q;
       <div class="container page-head">
         <Breadcrumbs items={crumbs} />
         <h1>Yeni gelenler</h1>
-        <p class="lead muted">Kataloğa en son eklenen 96 ürün.{isDemo && ' Demo envanterde ekleme sırası, kaynak kayıt numarasına göre belirlenir (kaynakta ekleme tarihi yayınlanmıyor).'}</p>
+        <p class="lead muted">Kataloğa en son eklenen 96 ürün.</p>
       </div>
       <div class="container"><CatalogView basePath="/yeni-gelenler" state={state} result={result} /></div>
     </>

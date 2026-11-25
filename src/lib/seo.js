@@ -82,6 +82,7 @@ export function productLd(p, { categoryName } = {}) {
     description: p.seoDescription || p.summary || undefined,
     sku: p.sku || undefined,
     category: categoryName || undefined,
+    // Katalog fiyatı sayfada gösterilen fiyattır; satın alma WhatsApp üzerinden yapılır.
     offers: {
       '@type': 'Offer',
       url: absoluteUrl(productUrl(p)),
@@ -96,7 +97,9 @@ export function productLd(p, { categoryName } = {}) {
   return ld;
 }
 
+/** Boş listede şema üretilmez (null döner; Seo bileşeni boş değerleri atlar). */
 export function itemListLd(products, name) {
+  if (!products?.length) return null;
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',

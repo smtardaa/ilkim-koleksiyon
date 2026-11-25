@@ -1,9 +1,10 @@
 /**
  * Katalog servisi — sayfaların tek giriş noktası.
- * Mod seçimi STORE_MODE ortam değişkeniyle yapılır (demo | shopify).
- * Shopify hatasında demo veriye geçilmez; hata yukarı iletilir.
+ * Veri kaynağı DATA_SOURCE ortam değişkeniyle seçilir. Şu an yalnızca `local`
+ * (src/data/catalog/*.json) vardır; yönetim paneli geldiğinde aynı yöntemleri
+ * sunan bir MySQL sağlayıcısı buraya eklenir (bkz. docs/YONETIM-PANELI.md).
  */
-import { storeMode, soldVisibility } from '../config/site.js';
+import { dataSource, soldVisibility } from '../config/site.js';
 import { runQuery, inCategory, sortProducts } from './search/engine.js';
 
 /** @typedef {import('./types.js').Product} Product */
@@ -11,19 +12,20 @@ import { runQuery, inCategory, sortProducts } from './search/engine.js';
 
 let providerPromise;
 export function getProvider() {
-  providerPromise ??= storeMode === 'shopify'
-    ? import('./providers/shopify.js').then((m) => m.shopifyProvider)
-    : import('./providers/demo.js').then((m) => m.demoProvider);
+  providerPromise ??= ({
+    local: () => import('./providers/local.js').then((m) => m.localProvider),
+  }[dataSource] ?? (() => Promise.reject(new Error(`Bilinmeyen veri kaynağı: ${dataSource}`))))();
   return providerPromise;
 }
 
 /** Tam katalog + kategori/seçki dizinleri */
 export async function loadCatalog() {
   const provider = await getProvider();
-  const [products, categories, collections] = await Promise.all([
+  const [products, categories, collections, countries] = await Promise.all([
     provider.getAllProducts(),
     provider.getCategories(),
     provider.getCollections(),
+    provider.getCountries(),
   ]);
   const catMap = new Map(categories.map((c) => [c.path, c]));
   const collMap = new Map(collections.map((c) => [c.handle, c]));
@@ -36,7 +38,7 @@ export async function loadCatalog() {
     }
     return out;
   };
-  return { provider, products, categories, collections, catMap, collMap, categoryTitles };
+  return { provider, products, categories, collections, countries, catMap, collMap, categoryTitles };
 }
 
 /** Listelerde gösterilecek ürünler (satılmış ürün görünürlük ayarına göre) */

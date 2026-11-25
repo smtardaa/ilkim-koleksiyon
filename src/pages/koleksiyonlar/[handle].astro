@@ -24,7 +24,7 @@ const base = collectionUrl(handle);
 ---
 <BaseLayout
   title={coll ? coll.title + (state.page > 1 ? ` — Sayfa ${state.page}` : '') : 'Seçki'}
-  description={coll ? truncate(`${coll.description ?? coll.title} ${coll.productCount} ürün.`, 158) : ''}
+  description={coll ? truncate(`${coll.description ?? coll.title}${coll.productCount ? ` ${coll.productCount} ürün.` : ''}`, 158) : ''}
   canonical={filtered ? base : state.page > 1 ? `${base}?sayfa=${state.page}` : base}
   noindex={filtered || (coll && coll.productCount === 0)}
   jsonLd={coll ? [breadcrumbLd(crumbs), itemListLd(result.items, coll.title)] : undefined}

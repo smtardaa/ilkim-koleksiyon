@@ -1,65 +1,48 @@
-// Demo veri bütünlüğü testleri — `npm test`
+// Katalog veri bütünlüğü testleri — `npm test`
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
-const read = (p) => JSON.parse(readFileSync(new URL(`../${p}`, import.meta.url), 'utf8'));
-const products = read('src/data/demo/products.json');
-const categories = read('src/data/demo/categories.json');
-const collections = read('src/data/demo/collections.json');
-const catPaths = new Set(categories.map((c) => c.path));
+const read = (p) => JSON.parse(readFileSync(new URL(`../src/data/catalog/${p}`, import.meta.url), 'utf8'));
+const categories = read('categories.json');
+const countries = read('countries.json');
+const collections = read('collections.json');
+const products = read('products.json');
 
-test('Ürün kimlikleri ve adresleri benzersiz', () => {
-  assert.equal(new Set(products.map((p) => p.id)).size, products.length);
-  assert.equal(new Set(products.map((p) => p.handle)).size, products.length);
-  for (const p of products) assert.match(p.handle, /^[a-z0-9-]+$/);
+const EXPECTED = [
+  'T.C. Madeni Paralar', 'T.C. Kağıt Paralar', 'T.C. Hatıra Paralar', 'Yabancı Madeni Paralar', 'Yabancı Kağıt Paralar',
+  'Nümismatik Malzeme', 'Gümüş Takılar', 'Vintage Objeler', 'Efemera', 'Madalya - Madalyon', 'Saat', 'Osmanlı Paraları',
+];
+
+test('Ana kategoriler verilen adlarla ve sırayla tanımlı', () => {
+  const sorted = [...categories].sort((a, b) => a.sort - b.sort);
+  assert.deepEqual(sorted.map((c) => c.title), EXPECTED);
+  assert.equal(new Set(categories.map((c) => c.path)).size, categories.length);
+  for (const c of categories) assert.match(c.path, /^[a-z0-9-]+$/);
 });
 
-test('Her ürünün kategori yolları tanımlı kategorilere işaret eder', () => {
-  for (const p of products) for (const c of p.categoryPaths) assert.ok(catPaths.has(c), `${p.handle}: ${c}`);
-});
-
-test('Kategori ağacı tutarlı (her ebeveyn mevcut)', () => {
-  for (const c of categories) if (c.parent) assert.ok(catPaths.has(c.parent), c.path);
-});
-
-test('Görsel dosyaları diskte var ve ölçüleri tanımlı', () => {
-  for (const p of products) for (const i of p.images) {
-    assert.ok(existsSync(new URL(`../public${i.src}`, import.meta.url)), i.src);
-    assert.ok(existsSync(new URL(`../public${i.srcSmall}`, import.meta.url)), i.srcSmall);
-    assert.ok(i.width > 0 && i.height > 0);
-    assert.ok(i.alt && i.alt.length > 3);
+test('Her kategorinin görseli ve görsel kaynağı var', () => {
+  for (const c of categories) {
+    assert.match(c.image.src, /^https:\/\//, c.path);
+    assert.ok(c.image.credit?.author && c.image.credit?.license && c.image.credit?.sourceUrl, c.path);
   }
 });
 
-test('Fiyatlar pozitif ve TRY', () => {
-  for (const p of products) { assert.ok(p.price.amount > 0, p.handle); assert.equal(p.price.currencyCode, 'TRY'); }
+test('Ülke seçimi yalnızca iki yabancı para kategorisinde', () => {
+  assert.deepEqual(categories.filter((c) => c.countries).map((c) => c.path).sort(), ['yabanci-kagit-paralar', 'yabanci-madeni-paralar']);
 });
 
-test('Hicrî tarihler takvim bilgisiyle saklanır', () => {
-  for (const p of products.filter((x) => x.specs.calendar === 'hicri')) {
-    assert.ok(p.specs.yearFrom < 1400, p.title);
-    assert.ok(p.specs.yearText, p.title);
+test('Ülke listesi ürünlerden bağımsız, benzersiz ve sayı taşımıyor', () => {
+  assert.ok(countries.length >= 200);
+  assert.equal(new Set(countries.map((c) => c.slug)).size, countries.length);
+  for (const c of countries) {
+    assert.match(c.slug, /^[a-z0-9-]+$/);
+    assert.ok(c.name);
+    assert.equal(c.productCount, undefined);
   }
 });
 
-test('Kaynak kaydı her demo üründe var', () => {
-  for (const p of products) { assert.match(p.source.url, /^https:\/\/eskiparamarket\.com\//); assert.ok(p.source.fetchedAt); }
-});
-
-test('Antika ve madalya kategorilerine doğrulanmamış ürün atanmadı', () => {
-  const bad = products.filter((p) => p.categoryPaths.some((c) => c.startsWith('madalya-ve-objeler') || c.startsWith('antika-ve-diger/antika')));
-  assert.equal(bad.length, 0);
-});
-
-test('Seçkiler ürün çoğaltmaz (aynı kimlik tek kayıt)', () => {
-  for (const c of collections) {
-    const ids = products.filter((p) => p.collections.includes(c.handle)).map((p) => p.id);
-    assert.equal(new Set(ids).size, ids.length);
-    assert.equal(ids.length, c.productCount);
-  }
-});
-
-test('Demo senaryoları açıkça işaretli', () => {
-  for (const p of products.filter((x) => x.availability.status !== 'in_stock')) assert.ok(p.demoScenario, p.handle);
+test('Örnek ürünler temizlendi; Sertifikalı Paralar seçkisi duruyor', () => {
+  assert.deepEqual(products, []);
+  assert.ok(collections.some((c) => c.handle === 'sertifikali-paralar'));
 });

@@ -5,11 +5,11 @@ import { business, filled, PLACEHOLDER } from '../config/business.js';
 const cm = business.commerce;
 const val = (x: any) => (filled(x) ? x : null);
 ---
-<InfoPage title="Sıkça sorulan sorular" path="/sss" description="Sipariş, ödeme, kargo, iade, favoriler ve ürün bilgileri hakkında sık sorulan sorular.">
+<InfoPage title="Sıkça sorulan sorular" path="/sss" description="Satın alma, kargo, iade ve ürün bilgileri hakkında sık sorulan sorular.">
   <div class="faq">
     <details open>
-      <summary>Fiyatlar sabit mi? Teklif verebilir miyim?</summary>
-      <p>Bütün ürünler sabit fiyatla satılır. Teklif veya açık artırma sistemi yoktur.</p>
+      <summary>Bir ürünü nasıl satın alabilirim?</summary>
+      <p>Sitede çevrim içi ödeme alınmaz. Ürün sayfasındaki “Satın almak için iletişime geç” düğmesi, ürün adı, kodu ve bağlantısını içeren hazır bir mesajla WhatsApp'ı açar; satın alma işletmeyle yazışarak tamamlanır.</p>
     </details>
     <details>
       <summary>Ürün görselleri gerçek ürüne mi ait?</summary>
@@ -21,7 +21,7 @@ const val = (x: any) => (filled(x) ? x : null);
     </details>
     <details>
       <summary>Hangi ödeme yöntemleri kullanılabilir?</summary>
-      <p>Ödeme, güvenli ödeme sayfasında alınır. Kabul edilen yöntemler: {val(cm.paymentMethods) ?? <span class="placeholder">{PLACEHOLDER}</span>}</p>
+      <p>Ödeme yöntemleri işletmeyle iletişim sırasında bildirilir. Kabul edilen yöntemler: {val(cm.paymentMethods) ?? <span class="placeholder">{PLACEHOLDER}</span>}</p>
     </details>
     <details>
       <summary>Kargo ne kadar sürer, ücreti nedir?</summary>
@@ -33,15 +33,7 @@ const val = (x: any) => (filled(x) ? x : null);
     </details>
     <details>
       <summary>Satılmış ürünler neden sitede görünüyor?</summary>
-      <p>Koleksiyoncuların arşiv ve karşılaştırma amacıyla inceleyebilmesi için satılmış ürünlerin sayfaları açık kalır; bu ürünler “Satıldı” etiketiyle gösterilir ve satın alınamaz.</p>
-    </details>
-    <details>
-      <summary>Favorilerim neden başka cihazda görünmüyor?</summary>
-      <p>Sitede üyelik sistemi bulunmadığı için favoriler yalnızca kullandığınız tarayıcıda saklanır.</p>
-    </details>
-    <details>
-      <summary>Sepetteki fiyat değişebilir mi?</summary>
-      <p>Fiyat ve stok, ürünü sepete eklerken ve ödemeye geçmeden önce yeniden kontrol edilir. Bir ürün bu sırada satıldıysa veya fiyatı güncellendiyse sepette bildirilir.</p>
+      <p>Koleksiyoncuların arşiv ve karşılaştırma amacıyla inceleyebilmesi için satılmış ürünlerin sayfaları açık kalır; bu ürünler “Satıldı” etiketiyle gösterilir.</p>
     </details>
   </div>
 </InfoPage>

@@ -5,11 +5,10 @@ import ProductCard from '../../components/ProductCard.astro';
 import ProviderError from '../../components/ProviderError.astro';
 import Icon from '../../components/Icon.astro';
 import { getProvider, loadCatalog, categoryTrail, categoryUrl, collectionUrl, productUrl, relatedProducts, productPageVisible } from '../../lib/catalog.js';
-import { purchaseLimit } from '../../lib/cart-server.js';
 import { breadcrumbLd, productLd, organizationLd } from '../../lib/seo.js';
 import { formatMoney, KIND_LABEL, STATUS_LABEL, truncate } from '../../lib/format.js';
-import { business, filled, PLACEHOLDER } from '../../config/business.js';
-import { isDemo } from '../../config/site.js';
+import { business, filled, PLACEHOLDER, whatsappProductUrl } from '../../config/business.js';
+import { publicOrigin } from '../../config/site.js';
 
 const handle = decodeURIComponent(Astro.params.handle ?? '');
 let product: any = null, catalog: any = null, error: any = null;
@@ -22,7 +21,7 @@ if (!error && (!product || !productPageVisible(product))) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 
-let crumbs: any[] = [], specs: [string, string][] = [], related: any[] = [], catLinks: any[] = [], collLinks: any[] = [], limit = 0, primaryTitle: string | null = null;
+let crumbs: any[] = [], specs: [string, string][] = [], related: any[] = [], catLinks: any[] = [], collLinks: any[] = [], primaryTitle: string | null = null;
 if (product) {
   const trail = product.primaryCategory ? categoryTrail(catalog, product.primaryCategory) : [];
   crumbs = [{ title: 'Ana sayfa', href: '/' }, ...trail, { title: product.title, href: productUrl(product) }];
@@ -50,11 +49,13 @@ if (product) {
     .filter(Boolean)
     .sort((a: any, b: any) => a.path.split('/').length - b.path.split('/').length);
   collLinks = product.collections.map((h: string) => catalog.collMap.get(h)).filter(Boolean);
-  limit = purchaseLimit(product);
 }
 const status = product?.availability.status;
 const img0 = product?.images?.[0];
-const desc = product ? truncate(product.seoDescription || `${product.title}. ${product.summary} Fiyat: ${formatMoney(product.price)}${status === 'sold' ? ' — satıldı' : status === 'out_of_stock' ? ' — stokta yok' : ''}.`, 158) : '';
+const priceDesc = product ? `Fiyat: ${formatMoney(product.price)}` : '';
+// “Satın almak için iletişime geç”: WhatsApp'a ürün adı, kodu ve sayfa bağlantısıyla hazır mesaj.
+const contactUrl = product && status === 'in_stock' ? whatsappProductUrl(product, publicOrigin(Astro.url) + productUrl(product)) : null;
+const desc = product ? truncate(product.seoDescription || `${product.title}. ${product.summary} ${priceDesc}${status === 'sold' ? ' — satıldı' : status === 'out_of_stock' ? ' — stokta yok' : ''}.`, 158) : '';
 const commerce = business.commerce;
 const deliveryRows = [
   ['Kargoya teslim', commerce.dispatchTime],
@@ -113,38 +114,24 @@ const deliveryRows = [
         <p class:list={['stock', status === 'in_stock' ? 'stock--in' : status === 'sold' ? 'stock--sold' : 'stock--oos']}>{STATUS_LABEL[status]}</p>
         {product.summary && <p class="muted">{product.summary}</p>}
 
-        {isDemo && product.demoScenario && (
-          <p class="notice notice--demo small">
-            <strong>Demo senaryosu:</strong> Bu ürünün “{STATUS_LABEL[status]}” durumu, satış durumu davranışını göstermek için demo verisinde işaretlenmiştir; gerçek bir satış bilgisi değildir.
-          </p>
-        )}
-
         <div class="buy-box">
           {status === 'in_stock' ? (
-            <>
-              <div class="buy-row">
-                <div class="qty" data-qty>
-                  <button type="button" data-qty-step="-1" aria-label="Adedi azalt">−</button>
-                  <label class="visually-hidden" for="qty">Adet</label>
-                  <input id="qty" type="number" inputmode="numeric" min="1" max={limit} value="1" />
-                  <button type="button" data-qty-step="1" aria-label="Adedi artır">+</button>
-                </div>
-                <button type="button" class="btn btn--lime" data-add-to-cart={product.variantId} data-qty-input="qty" data-msg="buy-msg">
-                  <Icon name="bag" /> Sepete ekle
-                </button>
-              </div>
-              <p class="small muted" style="margin:0">Bu üründen en fazla {limit} adet alınabilir. Fiyat ve stok, sepete eklerken ve ödemeden önce yeniden doğrulanır.</p>
-            </>
+            contactUrl ? (
+              <a class="btn btn--lime btn--block" href={contactUrl} target="_blank" rel="noopener">
+                <Icon name="whatsapp" /> Satın almak için iletişime geç
+              </a>
+            ) : (
+              <>
+                <button type="button" class="btn btn--block" disabled aria-disabled="true"><Icon name="whatsapp" /> Satın almak için iletişime geç</button>
+                <p class="small muted" style="margin:0">İletişim numarası henüz eklenmedi.</p>
+              </>
+            )
           ) : (
             <>
               <button type="button" class="btn btn--block" disabled aria-disabled="true">{status === 'sold' ? 'Bu ürün satıldı' : 'Stokta yok'}</button>
-              <p class="small muted" style="margin:0">{status === 'sold' ? 'Ürün sayfası ve görselleri arşiv amacıyla erişilebilir kalır; satın alma kapalıdır.' : 'Ürün şu anda satın alınamıyor.'}</p>
+              <p class="small muted" style="margin:0">{status === 'sold' ? 'Ürün sayfası arşiv amacıyla erişilebilir kalır.' : 'Ürün şu anda satılık değil.'}</p>
             </>
           )}
-          <p id="buy-msg" class="form-msg" role="status" aria-live="polite"></p>
-          <button type="button" class="btn btn--outline btn--sm" data-fav-toggle={product.id} data-title={product.title} aria-pressed="false" style="justify-self:start">
-            <Icon name="heart" /> Favorilere ekle
-          </button>
         </div>
 
         {specs.length > 0 && (
@@ -153,7 +140,6 @@ const deliveryRows = [
             <table class="spec-table">
               <tbody>{specs.map(([k, v]) => <tr><th scope="row">{k}</th><td>{v}</td></tr>)}</tbody>
             </table>
-            {isDemo && <p class="source-note" style="margin-top:8px">Teknik bilgiler örnek envanter kaydındaki ürün adından ve kategorisinden okunmuştur; okunamayan alanlar gösterilmez.</p>}
           </section>
         )}
 

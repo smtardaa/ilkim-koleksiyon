@@ -1,15 +1,35 @@
 /**
  * Ortak yanıt başlıkları:
- * - İndeksleme kapalıyken (demo/staging) her yanıta `X-Robots-Tag: noindex`.
+ * - İndeksleme kapalıyken (önizleme/staging) her yanıta `X-Robots-Tag: noindex`.
  * - Önbellek politikası (CDN önündeyken geçerlidir; ayrıntı README → “Güncelleme ve önbellek”).
  * - Temel güvenlik başlıkları.
  */
 import { defineMiddleware } from 'astro:middleware';
-import { indexingEnabled, storeMode } from './config/site.js';
+import { indexingEnabled } from './config/site.js';
 
-const PRIVATE_PATHS = [/^\/sepet/, /^\/favoriler/, /^\/api\//, /^\/arama/];
+const PRIVATE_PATHS = [/^\/api\//, /^\/arama/];
+
+/**
+ * Eski (satış sitesi dönemi) kategori adresleri → yeni katalog kategorileri.
+ * Yalnızca gerçek bir karşılığı olanlar yönlendirilir; karşılığı olmayanlar
+ * (ör. yabancı paraların eski ülke sayfaları, fantazi paralar) 404 döner.
+ */
+const LEGACY_CATEGORY_REDIRECTS = [
+  [/^\/kategori\/tc-hatira-paralari(\/.*)?$/, '/kategori/tc-hatira-paralar'],
+  [/^\/kategori\/tc-kagit-paralar\/.+$/, '/kategori/tc-kagit-paralar'],
+  [/^\/kategori\/tc-madeni-paralar\/.+$/, '/kategori/tc-madeni-paralar'],
+  [/^\/kategori\/osmanli-paralari\/.+$/, '/kategori/osmanli-paralari'],
+  [/^\/kategori\/madalya-ve-objeler(\/.*)?$/, '/kategori/madalya-madalyon'],
+  [/^\/kategori\/antika-ve-diger(\/antika)?$/, '/kategori/vintage-objeler'],
+  [/^\/kategori\/pul-ve-koleksiyon-malzemeleri\/pul(\/.*)?$/, '/kategori/efemera'],
+  [/^\/kategori\/pul-ve-koleksiyon-malzemeleri\/koleksiyon-malzemeleri(\/.*)?$/, '/kategori/numismatik-malzeme'],
+  // İkiye bölünen gruplarda tek bir hedef yok: kategori haritasına yönlendirilir.
+  [/^\/kategori\/(pul-ve-koleksiyon-malzemeleri|yabanci-paralar)$/, '/kategori'],
+];
 
 export const onRequest = defineMiddleware(async (ctx, next) => {
+  const legacy = LEGACY_CATEGORY_REDIRECTS.find(([re]) => re.test(ctx.url.pathname));
+  if (legacy) return ctx.redirect(legacy[1], 301);
   const res = await next();
   const path = ctx.url.pathname;
   const h = res.headers;
@@ -27,11 +47,9 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
     if (PRIVATE_PATHS.some((r) => r.test(path)) || res.status >= 400) {
       h.set('Cache-Control', 'no-store');
     } else if (type.includes('text/html') || type.includes('xml')) {
-      // Shopify modunda CDN 60 sn taze tutar, 5 dk boyunca arka planda yenilerken eskiyi sunar.
-      // Demo modunda veri dağıtımla değiştiği için kısa tutulur.
-      h.set('Cache-Control', storeMode === 'shopify'
-        ? 'public, max-age=0, s-maxage=60, stale-while-revalidate=300'
-        : 'public, max-age=0, s-maxage=300');
+      // Yerel veri dağıtımla değişir; yönetim paneli geldiğinde ürün güncellemeleri
+      // hızlı yansısın diye CDN süresi kısa tutulur.
+      h.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
     }
   }
   return res;

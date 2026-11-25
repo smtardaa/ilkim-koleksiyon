@@ -14,7 +14,7 @@ const items = catalog ? catalog.collections.map((c: any) => ({
   preview: listable(catalog.products).filter((p: any) => p.collections.includes(c.handle) && p.images[0]).slice(0, 3),
 })) : [];
 ---
-<BaseLayout title="Koleksiyon seçkileri" description="Sertifikalı paralar, gümüş paralar, para setleri ve polimer banknotlar gibi kategoriler arası seçkiler." canonical="/koleksiyonlar" jsonLd={breadcrumbLd(crumbs)}>
+<BaseLayout title="Koleksiyon seçkileri" description="Sertifikalı paralar gibi kategoriler arası koleksiyon seçkileri." canonical="/koleksiyonlar" jsonLd={breadcrumbLd(crumbs)}>
   {error ? <ProviderError error={error} /> : (
     <div class="container" style="padding-bottom:64px">
       <div class="page-head">
@@ -31,7 +31,7 @@ const items = catalog ? catalog.collections.map((c: any) => ({
             <div class="body">
               <h2 class="title" style="font-size:1.15rem"><a href={collectionUrl(c.handle)}>{c.title}</a></h2>
               {c.description && <p class="meta">{c.description}</p>}
-              <div class="foot"><span class="muted small">{c.productCount} ürün</span><Icon name="arrow-right" /></div>
+              <div class="foot"><span class="muted small">{c.productCount > 0 ? `${c.productCount} ürün` : 'Henüz ürün eklenmedi'}</span><Icon name="arrow-right" /></div>
             </div>
           </article>
         ))}

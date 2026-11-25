@@ -1,25 +1,20 @@
 /**
- * Menü ve ana sayfa vitrin ayarları.
- * Kategori yolları hem demo verisinde hem Shopify'da (ilkim.category_path
- * metafield'ı) aynı tutulmalıdır. Ayrıntılı hiyerarşi katalog ve filtrelerde yer alır;
- * burada yalnızca üst seviye gruplar bulunur.
+ * Menü bağlantıları. Kategori listesi TEK kaynaktan gelir:
+ * src/data/catalog/categories.json (ad, sıra, görsel). Header, mobil menü,
+ * kategori kartları, kategori butonları ve ana sayfa bölümleri bu listeyi kullanır.
  */
-export const topCategories = [
-  { path: 'tc-kagit-paralar', title: 'T.C. Kâğıt Paraları' },
-  { path: 'tc-madeni-paralar', title: 'T.C. Madeni Paraları' },
-  { path: 'tc-hatira-paralari', title: 'T.C. Hatıra Paraları' },
-  { path: 'osmanli-paralari', title: 'Osmanlı Paraları' },
-  { path: 'yabanci-paralar', title: 'Yabancı Paralar' },
-  { path: 'pul-ve-koleksiyon-malzemeleri', title: 'Pul ve Koleksiyon Malzemeleri' },
-  { path: 'madalya-ve-objeler', title: 'Madalya ve Objeler' },
-  { path: 'antika-ve-diger', title: 'Antika ve Diğer Koleksiyon Ürünleri' },
-];
+import categories from '../data/catalog/categories.json' with { type: 'json' };
+
+/** Ana kategoriler, verilen sırayla: [{ path, title, description, image, countries }] */
+export const topCategories = [...categories]
+  .filter((c) => !c.parent)
+  .sort((a, b) => a.sort - b.sort);
 
 export const mainNav = [
-  { href: '/urunler', label: 'Mağaza' },
+  { href: '/urunler', label: 'Katalog' },
   { href: '/kategori', label: 'Kategoriler', dropdown: true },
-  { href: '/koleksiyonlar', label: 'Koleksiyonlar' },
   { href: '/yeni-gelenler', label: 'Yeni Gelenler' },
+  { href: '/koleksiyon-rehberi', label: 'Koleksiyon Rehberi' },
   { href: '/iletisim', label: 'İletişim' },
 ];
 
@@ -27,9 +22,8 @@ export const footerNav = {
   magaza: [
     { href: '/urunler', label: 'Tüm ürünler' },
     { href: '/yeni-gelenler', label: 'Yeni gelenler' },
-    { href: '/koleksiyonlar', label: 'Koleksiyon seçkileri' },
+    { href: '/koleksiyonlar/sertifikali-paralar', label: 'Sertifikalı paralar' },
     { href: '/kategori', label: 'Bütün kategoriler' },
-    { href: '/favoriler', label: 'Favorilerim' },
   ],
   bilgi: [
     { href: '/koleksiyon-rehberi', label: 'Koleksiyon rehberi' },
@@ -40,21 +34,7 @@ export const footerNav = {
   yasal: [
     { href: '/bilgi/kargo-ve-teslimat', label: 'Kargo ve teslimat' },
     { href: '/bilgi/iade-ve-cayma', label: 'İade ve cayma hakkı' },
-    { href: '/bilgi/odeme-secenekleri', label: 'Ödeme seçenekleri' },
-    { href: '/bilgi/mesafeli-satis-sozlesmesi', label: 'Mesafeli satış sözleşmesi' },
-    { href: '/bilgi/on-bilgilendirme-formu', label: 'Ön bilgilendirme formu' },
     { href: '/bilgi/gizlilik-ve-kvkk', label: 'Gizlilik ve KVKK' },
     { href: '/bilgi/cerez-politikasi', label: 'Çerez politikası' },
   ],
-};
-
-/**
- * Ana sayfa “Koleksiyonunu seç” kartları. Görseller çalışma anında katalogdan
- * (ilgili gruptaki stoktaki ürünlerin ilk görselleri) seçilir; uydurma görsel yoktur.
- */
-export const homeCards = {
-  big: { title: 'Kâğıt Paralar', text: 'T.C., Osmanlı ve dünya banknotları', href: '/urunler?tur=banknot', match: { kind: 'banknot' } },
-  coins: { title: 'Madeni Paralar', text: 'Tedavül, hatıra ve Osmanlı sikkeleri', href: '/urunler?tur=madeni', match: { kind: 'madeni' } },
-  cert: { title: 'Sertifikalı Paralar', text: 'Derecelendirilmiş ve belgeli parçalar', href: '/koleksiyonlar/sertifikali-paralar', match: { collection: 'sertifikali-paralar' } },
-  dark: { title: 'Koleksiyon Seçkileri', text: 'Gümüş paralar, setler ve özel seçkiler', href: '/koleksiyonlar', match: { collection: 'gumus-paralar' } },
 };

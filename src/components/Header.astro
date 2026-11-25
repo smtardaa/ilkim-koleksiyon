@@ -1,6 +1,8 @@
 ---
 import Icon from './Icon.astro';
 import { mainNav, topCategories } from '../config/navigation.js';
+import { whatsappUrl } from '../config/business.js';
+const wa = whatsappUrl();
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(href + '/'));
 ---
@@ -34,14 +36,11 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path === href
       <button type="button" class="icon-btn" data-search-open aria-label="Ara" aria-haspopup="dialog">
         <Icon name="search" />
       </button>
-      <a class="icon-btn" href="/favoriler" aria-label="Favoriler">
-        <Icon name="heart" />
-        <span class="badge-count" data-fav-count hidden>0</span>
-      </a>
-      <a class="icon-btn" href="/sepet" aria-label="Sepet">
-        <Icon name="bag" />
-        <span class="badge-count" data-cart-count hidden>0</span>
-      </a>
+      {wa && (
+        <a class="icon-btn" href={wa} target="_blank" rel="noopener" aria-label="WhatsApp ile iletişime geç">
+          <Icon name="whatsapp" />
+        </a>
+      )}
       <button type="button" class="icon-btn menu-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Menüyü aç" data-menu-toggle>
         <Icon name="menu" />
       </button>

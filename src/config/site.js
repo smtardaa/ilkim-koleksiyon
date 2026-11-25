@@ -4,36 +4,34 @@
  */
 import {
   SITE_URL,
-  STORE_MODE,
+  DATA_SOURCE,
   SITE_INDEXING,
   SOLD_PRODUCTS_VISIBILITY,
 } from 'astro:env/server';
 
 export const siteUrl = SITE_URL.replace(/\/+$/, '');
-export const storeMode = STORE_MODE; // 'demo' | 'shopify'
-export const isDemo = storeMode === 'demo';
+/** Katalog veri kaynağı: 'local' (src/data/catalog). İleride 'mysql' eklenecek. */
+export const dataSource = DATA_SOURCE;
 
 /**
- * İndeksleme yalnızca ÜÇ koşul birlikte sağlanınca açılır:
+ * İndeksleme yalnızca İKİ koşul birlikte sağlanınca açılır:
  *  1. SITE_INDEXING=on (yayına geçiş ayarı)
- *  2. STORE_MODE=shopify (gerçek envanter)
- *  3. SITE_URL gerçek bir https alan adı (localhost/önizleme değil)
+ *  2. SITE_URL gerçek bir https alan adı (localhost/önizleme değil)
  * Aksi halde her sayfa `noindex` döner (meta + X-Robots-Tag).
  */
 const isRealDomain = /^https:\/\//.test(siteUrl)
   && !/localhost|127\.0\.0\.1|\.local\b|staging|preview|vercel\.app|netlify\.app|pages\.dev/i.test(siteUrl);
-export const indexingEnabled = SITE_INDEXING === 'on' && storeMode === 'shopify' && isRealDomain;
+export const indexingEnabled = SITE_INDEXING === 'on' && isRealDomain;
 export const indexingBlockReason = indexingEnabled
   ? null
   : [
       SITE_INDEXING !== 'on' && 'SITE_INDEXING=off',
-      storeMode !== 'shopify' && 'demo envanter',
       !isRealDomain && 'gerçek alan adı tanımlı değil',
     ].filter(Boolean).join(', ');
 
 /**
  * Satılmış ürünlerin görünürlüğü (tek ayar):
- *  - 'visible'  : listelerde “Satıldı” etiketiyle görünür, ürün sayfası açık, satın alma kapalı.
+ *  - 'visible'  : listelerde “Satıldı” etiketiyle görünür, ürün sayfası açık, iletişim düğmesi kapalı.
  *  - 'unlisted' : listelerden ve aramadan çıkar, ürün sayfası doğrudan bağlantıyla açık kalır.
  *  - 'hidden'   : ürün sayfası da 404 döner (önerilmez; SEO değeri kaybolur).
  */
@@ -46,11 +44,19 @@ export const site = {
   lang: 'tr',
   currency: 'TRY',
   defaultDescription:
-    'İlkim Koleksiyon — T.C. ve Osmanlı kâğıt paraları, madeni paralar, hatıra paraları, yabancı paralar ve koleksiyon malzemeleri.',
+    'İlkim Koleksiyon kataloğu — T.C. ve yabancı madeni ve kâğıt paralar, hatıra paralar, Osmanlı paraları, nümismatik malzeme, gümüş takı, vintage obje, efemera, madalya ve saat.',
   defaultOgImage: '/brand/og-default.jpg',
-  demoNotice: 'Demo — ürünler ve fiyatlar örnek envanterden alınmıştır.',
   pageSize: 24,
 };
+
+/**
+ * Ziyaretçiye gönderilen bağlantılar için kök adres: SITE_URL gerçek bir https alan adıysa o,
+ * değilse isteğin geldiği adres. Böylece canlı ortamda localhost bağlantısı gönderilmez.
+ * @param {URL} requestUrl
+ */
+export function publicOrigin(requestUrl) {
+  return isRealDomain ? siteUrl : requestUrl.origin;
+}
 
 export function absoluteUrl(path = '/') {
   if (/^https?:\/\//.test(path)) return path;

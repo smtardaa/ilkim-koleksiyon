@@ -2,6 +2,8 @@
 import Icon from './Icon.astro';
 import { formatMoney, KIND_LABEL } from '../lib/format.js';
 import { productUrl } from '../lib/catalog.js';
+import { whatsappProductUrl } from '../config/business.js';
+import { publicOrigin } from '../config/site.js';
 
 interface Props {
   product: any;
@@ -19,6 +21,8 @@ const metaParts = [
   p.specs.yearText && p.specs.calendar === 'hicri' ? `H. ${p.specs.yearText}` : p.specs.yearText,
 ].filter(Boolean);
 const cert = p.specs.certification;
+// Satılmış/stokta olmayan ürün için iletişim düğmesi gösterilmez.
+const contactUrl = status === 'in_stock' ? whatsappProductUrl(p, publicOrigin(Astro.url) + productUrl(p)) : null;
 ---
 <article class:list={['p-card', { 'is-sold': status === 'sold' }]}>
   <a class="media" href={productUrl(p)} tabindex="-1" aria-hidden="true">
@@ -38,9 +42,6 @@ const cert = p.specs.certification;
   {status === 'sold' && <span class="status-badge status-badge--sold">Satıldı</span>}
   {status === 'out_of_stock' && <span class="status-badge status-badge--oos">Stokta yok</span>}
   {cert && <span class="status-badge status-badge--cert" title="Sertifika">{cert.service}{cert.grade ? ` ${cert.grade}` : ''}</span>}
-  <button type="button" class="fav-btn" data-fav-toggle={p.id} data-title={p.title} aria-pressed="false" aria-label={`Favorilere ekle: ${p.title}`}>
-    <Icon name="heart" />
-  </button>
   <div class="body">
     <Heading class="title"><a href={productUrl(p)}>{p.title}</a></Heading>
     {metaParts.length > 0 && <p class="meta">{metaParts.join(' · ')}</p>}
@@ -49,14 +50,10 @@ const cert = p.specs.certification;
         {p.compareAtPrice && p.compareAtPrice.amount > p.price.amount && <s>{formatMoney(p.compareAtPrice)}</s>}
         <span class="visually-hidden">Fiyat: </span>{formatMoney(p.price)}
       </span>
-      {status === 'in_stock' ? (
-        <button type="button" class="add" data-add-to-cart={p.variantId} aria-label={`Sepete ekle: ${p.title}`}>
-          <Icon name="plus" />
-        </button>
-      ) : (
-        <button type="button" class="add" disabled aria-label={status === 'sold' ? `Satıldı: ${p.title}` : `Stokta yok: ${p.title}`}>
-          <Icon name="minus" />
-        </button>
+      {contactUrl && (
+        <a class="add contact-btn" href={contactUrl} target="_blank" rel="noopener" aria-label={`Satın almak için iletişime geç: ${p.title}`}>
+          <Icon name="whatsapp" />
+        </a>
       )}
     </div>
   </div>

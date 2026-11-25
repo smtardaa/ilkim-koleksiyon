@@ -1,0 +1,218 @@
+[
+ {
+  "path": "tc-madeni-paralar",
+  "title": "T.C. Madeni Paralar",
+  "sort": 1,
+  "description": "Cumhuriyet dönemi tedavül ve madeni paraları.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/10_Lira_%28Turkey%29.jpg/500px-10_Lira_%28Turkey%29.jpg",
+   "credit": {
+    "author": "AKS.9955",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:10_Lira_(Turkey).jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "tc-kagit-paralar",
+  "title": "T.C. Kağıt Paralar",
+  "sort": 2,
+  "description": "Cumhuriyet dönemi emisyonlarından kâğıt paralar.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://www.tcmb.gov.tr/wps/wcm/connect/059c366c-b2a2-459f-95cf-6c662dc7fcad/1/11_1.jpg?MOD=AJPERES",
+   "credit": {
+    "author": "Türkiye Cumhuriyet Merkez Bankası",
+    "license": "TCMB banknot çoğaltma koşulları (ÖRNEKTİR GEÇMEZ ibareli resmî görsel)",
+    "licenseUrl": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Banknotlar/Banknotlarla+ilgili+Genel+Bilgiler/Banknotlarin+Cogaltilmasi",
+    "sourceUrl": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Banknotlar/Cumhuriyet+Donemi+Banknotlari/Emisyon+Gruplari/1.+Emisyon+Grubu/Emisyon2"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "tc-hatira-paralar",
+  "title": "T.C. Hatıra Paralar",
+  "sort": 3,
+  "description": "Cumhuriyet dönemi hatıra ve anı paraları.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/62/Turkey_1500_Lira_1981_front.jpg/500px-Turkey_1500_Lira_1981_front.jpg",
+   "credit": {
+    "author": "Bilinmiyor",
+    "license": "Kamu malı",
+    "licenseUrl": null,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkey_1500_Lira_1981_front.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "yabanci-madeni-paralar",
+  "title": "Yabancı Madeni Paralar",
+  "sort": 4,
+  "description": "Dünya ülkelerinin madeni paraları; ülkelere göre.",
+  "parent": null,
+  "countries": true,
+  "image": {
+   "src": "https://www.kenom.de/api/v1/records/record_DE-MUS-805310_kenom_215660/files/images/record_DE-MUS-805310_kenom_215660_vs.jpg/full/480,/0/default.jpg",
+   "credit": {
+    "author": "Landesamt für Denkmalpflege und Archäologie Sachsen-Anhalt",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceUrl": "https://www.kenom.de/id/record_DE-MUS-805310_kenom_215660"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "yabanci-kagit-paralar",
+  "title": "Yabancı Kağıt Paralar",
+  "sort": 5,
+  "description": "Dünya ülkelerinin banknotları; ülkelere göre.",
+  "parent": null,
+  "countries": true,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Obverse_of_the_series_2021_%241_Federal_Reserve_Note.jpg/500px-Obverse_of_the_series_2021_%241_Federal_Reserve_Note.jpg",
+   "credit": {
+    "author": "Aisrotkev8000",
+    "license": "Kamu malı",
+    "licenseUrl": null,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Obverse_of_the_series_2021_%241_Federal_Reserve_Note.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "numismatik-malzeme",
+  "title": "Nümismatik Malzeme",
+  "sort": 6,
+  "description": "Albüm, kapsül, kılıf ve diğer koleksiyon malzemeleri.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/A_coin_album_page_with_silver_coins.jpg/500px-A_coin_album_page_with_silver_coins.jpg",
+   "credit": {
+    "author": "Billjones94",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_coin_album_page_with_silver_coins.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "gumus-takilar",
+  "title": "Gümüş Takılar",
+  "sort": 7,
+  "description": "Gümüş takı ve aksesuarlar.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fe/Bracelet_with_pendant_MET_sf9811110.jpg/500px-Bracelet_with_pendant_MET_sf9811110.jpg",
+   "credit": {
+    "author": "The Metropolitan Museum of Art",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bracelet_with_pendant_MET_sf9811110.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "vintage-objeler",
+  "title": "Vintage Objeler",
+  "sort": 8,
+  "description": "Eski ve koleksiyon değeri taşıyan objeler.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Clix_De_Luxe_Camera.jpg/500px-Clix_De_Luxe_Camera.jpg",
+   "credit": {
+    "author": "R.jeff.m",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Clix_De_Luxe_Camera.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "efemera",
+  "title": "Efemera",
+  "sort": 9,
+  "description": "Pul, kartpostal, belge ve diğer kâğıt koleksiyon parçaları.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Turkish_postage_stamp%2C_Selimiye_Mosque%2C_Scott_No._J61%2C_issued_1913.jpg/500px-Turkish_postage_stamp%2C_Selimiye_Mosque%2C_Scott_No._J61%2C_issued_1913.jpg",
+   "credit": {
+    "author": "Bilinmiyor",
+    "license": "Kamu malı",
+    "licenseUrl": null,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkish_postage_stamp%2C_Selimiye_Mosque%2C_Scott_No._J61%2C_issued_1913.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "madalya-madalyon",
+  "title": "Madalya - Madalyon",
+  "sort": 10,
+  "description": "Madalya, madalyon ve nişanlar.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9c/1937_Thrace_Military_Manouvres_Momento_Side-1.jpg/500px-1937_Thrace_Military_Manouvres_Momento_Side-1.jpg",
+   "credit": {
+    "author": "Ertly",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:1937_Thrace_Military_Manouvres_Momento_Side-1.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "saat",
+  "title": "Saat",
+  "sort": 11,
+  "description": "Cep saati, kol saati ve diğer koleksiyon saatleri.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/Pocket_watch_of_William_S._Haynes.jpg/500px-Pocket_watch_of_William_S._Haynes.jpg",
+   "credit": {
+    "author": "Eden Aviv",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pocket_watch_of_William_S._Haynes.jpg"
+   },
+   "alt": ""
+  }
+ },
+ {
+  "path": "osmanli-paralari",
+  "title": "Osmanlı Paraları",
+  "sort": 12,
+  "description": "Osmanlı dönemi kâğıt paraları ve sikkeleri.",
+  "parent": null,
+  "countries": false,
+  "image": {
+   "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Turkish_Gold_Coin%2C_Finland.jpg/500px-Turkish_Gold_Coin%2C_Finland.jpg",
+   "credit": {
+    "author": "Museovirasto (Finlandiya Müze Kurumu)",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Turkish_Gold_Coin%2C_Finland.jpg"
+   },
+   "alt": ""
+  }
+ }
+]

@@ -52,10 +52,19 @@ for (let i = 1; i <= pageCount; i++) {
 }
 const from = result.total === 0 ? 0 : (page - 1) * result.pageSize + 1;
 const to = Math.min(result.total, page * result.pageSize);
+// Hiç ürün yoksa (filtre/arama da yoksa) filtre paneli yerine sade bir boş durum gösterilir.
+const catalogEmpty = result.total === 0 && !hasFilters(state) && !state.q;
 const preservedHidden = [] as { name: string; value: string }[];
 if (state.q) preservedHidden.push({ name: 'q', value: state.q });
 if (state.category && !omitCategoryParam) preservedHidden.push({ name: 'kategori', value: state.category });
 ---
+{catalogEmpty ? (
+<div class="empty-state" style="margin-bottom:64px">
+  <h2>{emptyTitle ?? 'Bu bölüme henüz ürün eklenmedi.'}</h2>
+  <p class="muted">{emptyText ?? 'Ürünler eklendiğinde burada listelenecek.'}</p>
+  <div class="actions"><a class="btn btn--outline" href="/#kategoriler">Kategorilere göz at</a></div>
+</div>
+) : (
 <div class="catalog">
   <aside class="filters" id="filters" data-open="false" aria-label="Filtreler">
     <div class="filters-head">
@@ -187,3 +196,4 @@ if (state.category && !omitCategoryParam) preservedHidden.push({ name: 'kategori
     )}
   </div>
 </div>
+)}

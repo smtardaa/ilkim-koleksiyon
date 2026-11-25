@@ -1,0 +1,17 @@
+---
+export const prerender = true;
+import InfoPage from '../components/InfoPage.astro';
+import { topCategories } from '../config/navigation.js';
+/** Kategori kartı görsellerinin kaynakları ve lisansları (CC BY / CC BY-SA atıf gereği). */
+---
+<InfoPage title="Görsel kaynakları" path="/kaynaklar" description="Kategori görsellerinin kaynakları ve lisans bilgileri." lead="Kategori kartlarında kullanılan görseller aşağıdaki kaynaklardan bağlantıyla gösterilmektedir.">
+  <ul>
+    {topCategories.map((c: any) => c.image?.credit && (
+      <li>
+        <strong>{c.title}:</strong> {c.image.credit.author} ·{' '}
+        {c.image.credit.licenseUrl ? <a href={c.image.credit.licenseUrl} rel="noopener license" target="_blank">{c.image.credit.license}</a> : c.image.credit.license}
+        {' · '}<a href={c.image.credit.sourceUrl} rel="noopener" target="_blank">Kaynak</a>
+      </li>
+    ))}
+  </ul>
+</InfoPage>

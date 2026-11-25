@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import CatalogView from '../../components/CatalogView.astro';
+import CountryPicker from '../../components/CountryPicker.astro';
 import ProviderError from '../../components/ProviderError.astro';
 import { loadCatalog, search, categoryTrail, childCategories, categoryUrl } from '../../lib/catalog.js';
 import { parseState, hasFilters } from '../../lib/search/engine.js';
@@ -31,11 +32,13 @@ if (category) {
   const parentTitles = trail.slice(0, -1).map((t: any) => t.title);
   title = [category.title, ...parentTitles.slice(-1)].join(' — ') + (state.page > 1 ? ` — Sayfa ${state.page}` : '');
   description = truncate(category.description
-    ? `${category.description} ${category.productCount} ürün.`
-    : `${[...parentTitles, category.title].join(' › ')}: ${category.productCount} ürün. Yıl, kondisyon, katalog numarası ve fiyata göre filtreleyin.`, 158);
+    ? `${category.description}${category.productCount ? ` ${category.productCount} ürün.` : ''}`
+    : `${[...parentTitles, category.title].join(' › ')}. Yıl, kondisyon, katalog numarası ve fiyata göre filtreleyin.`, 158);
   filtered = hasFilters(state) || !!state.q || state.sort !== 'onerilen';
   canonical = filtered ? categoryUrl(path) : state.page > 1 ? `${categoryUrl(path)}?sayfa=${state.page}` : categoryUrl(path);
 }
+// Ülke seçimi: yabancı para kategorilerinde ve onların ülke sayfalarında
+const pickerCat = category ? (category.countries ? category : category.countrySlug ? catalog.catMap.get(category.parent) : null) : null;
 ---
 <BaseLayout
   title={title || 'Kategori'}
@@ -50,15 +53,16 @@ if (category) {
         <Breadcrumbs items={crumbs} />
         <h1>{category.title}</h1>
         {category.description && <p class="lead muted">{category.description}</p>}
+        {pickerCat && <CountryPicker category={pickerCat} countries={catalog.countries} current={category.countrySlug ? category.title : null} />}
       </div>
       <div class="container">
         {category.productCount === 0 ? (
           <div class="empty-state" style="margin-bottom:64px">
-            <h2>Bu kategoride şu anda ürün yok</h2>
-            <p class="muted">“{category.title}” kategorisi mağaza yapısında yer alıyor; ürünler envantere eklendiğinde burada listelenecek.</p>
+            <h2>Bu kategoriye henüz ürün eklenmedi.</h2>
+            <p class="muted">Ürünler eklendiğinde burada listelenecek.</p>
             <div class="actions">
               {category.parent && <a class="btn btn--outline" href={categoryUrl(category.parent)}>Üst kategoriye dön</a>}
-              <a class="btn btn--lime" href="/urunler">Bütün ürünlere göz at</a>
+              <a class="btn btn--lime" href="/#kategoriler">Kategorilere göz at</a>
             </div>
           </div>
         ) : (

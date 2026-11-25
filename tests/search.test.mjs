@@ -5,8 +5,10 @@ import { readFileSync } from 'node:fs';
 import { normalizeText, parseQuery, fold } from '../src/lib/search/normalize.js';
 import { runQuery, parseState, stateToParams, FACETS, stockKey } from '../src/lib/search/engine.js';
 
-const products = JSON.parse(readFileSync(new URL('../src/data/demo/products.json', import.meta.url), 'utf8'));
-const categories = JSON.parse(readFileSync(new URL('../src/data/demo/categories.json', import.meta.url), 'utf8'));
+import { fixtureProducts as products } from './fixtures/products.mjs';
+
+// Ürünler yalnızca test verisidir (tests/fixtures); kategoriler gerçek katalog dosyasından gelir.
+const categories = JSON.parse(readFileSync(new URL('../src/data/catalog/categories.json', import.meta.url), 'utf8'));
 const catMap = new Map(categories.map((c) => [c.path, c]));
 const categoryTitles = (path) => {
   const parts = path.split('/'); const out = [];
@@ -42,8 +44,9 @@ test('Sorgu: “yeni türk lirası” → ytl', () => {
 });
 
 test('Arama bütün katalogda yapılır ve sayfalama sonuçtan bağımsız sayılır', () => {
-  const r = run('q=lira');
-  assert.ok(r.total > r.items.length || r.total <= 24);
+  const r = run('q=lira', { pageSize: 1 });
+  assert.equal(r.items.length, 1);
+  assert.ok(r.total > r.items.length);
   const manual = products.filter((p) => normalizeText(`${p.title} ${p.specs.denomination?.label ?? ''}`).includes('lira'));
   assert.ok(r.total >= manual.length, `motor ${r.total} < elle ${manual.length}`);
 });
@@ -99,6 +102,12 @@ test('Fiyat aralığı ve sıralama', () => {
   for (const p of r.items) assert.ok(p.price.amount >= 1000 && p.price.amount <= 5000);
 });
 
+test('Boş katalogda arama hata vermeden sıfır sonuç döner', () => {
+  const r = runQuery([], parseState(new URLSearchParams('q=lira')), { categoryTitles, soldVisibility: 'visible', pageSize: 24 });
+  assert.equal(r.total, 0);
+  assert.equal(r.items.length, 0);
+});
+
 test('Sonuç yok durumu', () => {
   const r = run('q=zzzxxyy-olmayan');
   assert.equal(r.total, 0);
@@ -113,7 +122,7 @@ test('URL durumu gidiş-dönüş korunur', () => {
 
 test('Satılmış ürün görünürlük ayarı', () => {
   const sold = products.filter((p) => p.availability.status === 'sold');
-  assert.ok(sold.length > 0, 'demo senaryosunda satılmış ürün olmalı');
+  assert.ok(sold.length > 0, 'test verisinde satılmış ürün olmalı');
   const visible = run('stok=satildi', { soldVisibility: 'visible' });
   assert.equal(visible.total, sold.length);
   const unlisted = run('', { soldVisibility: 'unlisted', pageSize: 10000 });

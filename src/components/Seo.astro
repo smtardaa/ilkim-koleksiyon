@@ -2,7 +2,7 @@
 /**
  * Sayfa başı SEO etiketleri.
  * İndeksleme kararı: config/site.js → indexingEnabled.
- * Demo/staging ortamında her sayfa noindex döner (meta + middleware'deki X-Robots-Tag).
+ * İndeksleme kapalıyken (SITE_INDEXING=off veya gerçek alan adı yok) her sayfa noindex döner (meta + middleware'deki X-Robots-Tag).
  */
 import { site, absoluteUrl, indexingEnabled } from '../config/site.js';
 
@@ -10,7 +10,7 @@ interface Props {
   title: string;
   description?: string;
   canonical?: string | null;   // yol veya mutlak URL; null → canonical yok
-  noindex?: boolean;           // sayfaya özgü noindex (arama, sepet, filtre kombinasyonları)
+  noindex?: boolean;           // sayfaya özgü noindex (arama, filtre kombinasyonları)
   ogImage?: string;
   ogType?: 'website' | 'product' | 'article';
   jsonLd?: object | object[];
@@ -22,7 +22,7 @@ const { title, description = site.defaultDescription, canonical, noindex = false
 const fullTitle = title.includes(site.name) ? title : `${title} | ${site.name}`;
 const canonicalUrl = canonical === null ? null : absoluteUrl(canonical ?? Astro.url.pathname);
 const robots = !indexingEnabled || noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large';
-const ldList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const ldList = (jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []).filter(Boolean);
 const ogImg = absoluteUrl(ogImage);
 ---
 <title>{fullTitle}</title>

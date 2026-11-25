@@ -3,8 +3,8 @@
  *
  * Her zaman BÜTÜN veri kümesi üzerinde çalışır (sağlayıcının döndürdüğü tam
  * ürün listesi). Sayfalama en son uygulanır; sonuç sayısı ve filtre sayımları
- * tüm katalogdan hesaplanır. Demo ve Shopify modunda aynı motor kullanılır
- * (Shopify modunda tam katalog sunucu önbelleğinde tutulur; bkz. README).
+ * tüm katalogdan hesaplanır. Veri kaynağı (yerel dosya veya ileride MySQL)
+ * ne olursa olsun aynı motor kullanılır.
  */
 import { normalizeText, parseQuery } from './normalize.js';
 
@@ -226,8 +226,10 @@ export function runQuery(all, state, opts) {
       if (state.yearMin != null && y[1] < state.yearMin) return false;
       if (state.yearMax != null && y[0] > state.yearMax) return false;
     }
-    if (state.priceMin != null && p.price.amount < state.priceMin) return false;
-    if (state.priceMax != null && p.price.amount > state.priceMax) return false;
+    if (state.priceMin != null || state.priceMax != null) {
+      if (state.priceMin != null && p.price.amount < state.priceMin) return false;
+      if (state.priceMax != null && p.price.amount > state.priceMax) return false;
+    }
     if (catalogQ) {
       const c = docFor(p, categoryTitles).catalog.replace(/\s/g, '');
       if (!c || !c.includes(catalogQ)) return false;
@@ -291,7 +293,7 @@ function facetSorter(mode) {
 }
 
 const statusRank = (p) => (p.availability.status === 'in_stock' ? 0 : p.availability.status === 'out_of_stock' ? 1 : 2);
-const dateOf = (p) => Date.parse(p.createdAt ?? '') || p.order || 0; // demo: tarih yoksa kaynak kayıt sırası
+const dateOf = (p) => Date.parse(p.createdAt ?? '') || p.order || 0; // tarih yoksa kayıt sırası
 const yearSort = (p) => p.specs.calendar === 'hicri' && p.specs.yearFrom ? Math.round(p.specs.yearFrom * 0.970229 + 621.5643) : (p.specs.yearFrom ?? null);
 
 export function sortProducts(list, sort, scored = new Map()) {
